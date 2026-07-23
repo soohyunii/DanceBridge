@@ -1,15 +1,34 @@
 import re
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, EmailStr, field_validator
 
 INSTAGRAM_URL_PATTERN = re.compile(
     r"^https?://(www\.)?instagram\.com/(reel|p)/[A-Za-z0-9_-]+/?"
 )
 
+Role = Literal["dancer", "student"]
+
+
+class SignupRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+    role: Role
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    role: Role
+
 
 class VideoCreate(BaseModel):
-    dancer_id: int
     instagram_url: str
 
     @field_validator("instagram_url")
