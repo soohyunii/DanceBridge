@@ -28,3 +28,18 @@ class VideoOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class DancerCreate(BaseModel):
+    name: str
+    bio: str | None = None
+
+
+class DancerOut(BaseModel):
+    id: int
+    name: str
+    bio: str | None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

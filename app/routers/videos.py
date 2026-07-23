@@ -9,6 +9,10 @@ router = APIRouter(prefix="/videos", tags=["videos"])
 
 @router.post("", response_model=schemas.VideoOut, status_code=201)
 def create_video(video: schemas.VideoCreate, db: Session = Depends(get_db)):
+    dancer = db.query(models.Dancer).filter(models.Dancer.id == video.dancer_id).first()
+    if dancer is None:
+        raise HTTPException(status_code=404, detail="Dancer not found")
+
     db_video = models.Video(dancer_id=video.dancer_id, instagram_url=video.instagram_url)
     db.add(db_video)
     db.commit()
