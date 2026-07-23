@@ -28,6 +28,15 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+### 테스트
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
 ## 현재 상태
 
-FastAPI 기본 골격 세팅 완료 (`/health` 엔드포인트).
+- 인증 (회원가입/로그인, 계정당 댄서/학생 role 선택)
+- 댄서/학생 프로필, 클래스, 릴스 링크 등록, 클래스 신청(Enrollment) API
+- pytest 자동화 테스트 스위트
