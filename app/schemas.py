@@ -43,3 +43,41 @@ class DancerOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class StudentCreate(BaseModel):
+    name: str
+    bio: str | None = None
+
+
+class StudentOut(BaseModel):
+    id: int
+    name: str
+    bio: str | None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ClassCreate(BaseModel):
+    dancer_id: int
+    title: str
+    description: str | None = None
+    genre: str | None = None
+    level: str | None = None
+    price: int | None = None
+
+
+class ClassOut(BaseModel):
+    id: int
+    dancer_id: int
+    title: str
+    description: str | None
+    genre: str | None
+    level: str | None
+    price: int | None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
