@@ -1,0 +1,1345 @@
+DANCEBRIDGE SOFTWARE DESIGN DOCUMENT (SDD)
+Version: 1.0
+Target: Web + iOS + Android
+Document Type: MVP Implementation Guide
+
+
+0. DOCUMENT PURPOSE
+
+이 문서는 DanceBridge MVP를 구현할 개발자가 전체 시스템 구조, 핵심 도메인, 데이터 모델, API, 화면 흐름, 권한, 검색 및 배포 방식을 빠르게 이해하고 개발을 시작할 수 있도록 작성한 Software Design Document이다.
+
+DanceBridge는 수강생과 댄서를 연결하는 양면 마켓플레이스다.
+
+핵심 가치:
+- 수강생: 클래스의 분위기와 심리적 진입 장벽을 확인하고 자신에게 맞는 수업을 검색·신청한다.
+- 댄서: 자신의 장르, 스타일, 무드, 영상, 수업 방식을 구조화하여 등록하고 더 정확한 수강생에게 발견된다.
+
+MVP에서는 AI 자동 분석보다 명시적 태그와 구조화된 데이터를 우선한다.
+
+
+1. SYSTEM SCOPE
+
+1.1 MVP 포함 범위
+
+공통
+- 이메일 또는 소셜 로그인
+- 계정 역할 선택
+- 사용자 프로필 관리
+- 이미지 및 영상 업로드
+- 검색 및 필터
+- 알림
+- 신고 및 관리자 검수
+
+수강생
+- 수강생 프로필 생성
+- 클래스, 댄서, 노래, 장르, 무드 검색
+- 클래스 상세 조회
+- 찜하기
+- 수업 신청 또는 예약
+- 수강 완료 후 리뷰 작성
+
+댄서
+- 댄서 프로필 생성
+- 대표 영상 등록
+- 영상에 노래, 장르, 무드 태그 연결
+- 클래스 생성 및 수정
+- 클래스 일정 및 정원 관리
+- 신청자 목록 조회
+- 신청 승인 또는 취소
+- 리뷰 조회
+
+관리자
+- 댄서 계정 검수
+- 신고된 콘텐츠 검토
+- 사용자, 클래스, 영상 비활성화
+- 장르, 무드, 노래 메타데이터 관리
+
+1.2 MVP 제외 범위
+
+- 영상 기반 자동 장르·무드 분석
+- AI Dance DNA
+- 자체 실시간 채팅
+- 자동 정산 및 복잡한 세금 처리
+- 크루 모집과 공연 프로젝트 매칭
+- 다중 통화 및 글로벌 결제
+- 외부 SNS 자동 크롤링
+- 추천 모델의 머신러닝 개인화
+
+초기 버전에서는 수동 태깅과 규칙 기반 추천으로 검증한다.
+
+
+2. RECOMMENDED ARCHITECTURE
+
+2.1 전체 구조
+
+Client Layer
+- Web: Next.js
+- Mobile: React Native 또는 Expo
+- Admin Web: Next.js 내 별도 Admin Route 또는 별도 App
+
+API Layer
+- Backend: NestJS
+- API Style: REST
+- API Specification: OpenAPI 3.0 / Swagger
+- Authentication: JWT Access Token + Refresh Token
+- Authorization: Role-Based Access Control
+
+Data Layer
+- Primary Database: PostgreSQL
+- Cache / Rate Limit / Queue: Redis
+- Search: MVP는 PostgreSQL Full Text Search
+- 확장 시 OpenSearch 또는 Elasticsearch 도입
+- Object Storage: AWS S3 또는 Cloudflare R2
+- CDN: CloudFront 또는 Cloudflare CDN
+
+Background Processing
+- Queue: BullMQ
+- Video Processing: FFmpeg
+- Thumbnail Generation
+- Notification Jobs
+- Search Index Sync
+
+Infrastructure
+- Container: Docker
+- CI/CD: GitHub Actions
+- Backend Hosting: AWS ECS, Fly.io, Render 또는 Railway
+- Database: AWS RDS, Supabase Postgres 또는 Neon
+- Monitoring: Sentry + OpenTelemetry 또는 Datadog
+- Logging: JSON Structured Logging
+
+2.2 코드베이스 권장 구조
+
+Monorepo 권장
+
+/apps
+  /web
+  /mobile
+  /admin
+  /api
+
+/packages
+  /ui
+  /types
+  /api-client
+  /validation
+  /config
+
+기술 예시:
+- Monorepo: Turborepo
+- Package Manager: pnpm
+- Shared Types: TypeScript
+- Validation: Zod
+- ORM: Prisma
+- API Client: OpenAPI Generator 또는 TanStack Query 기반 수동 SDK
+
+웹과 앱이 동일한 API를 사용하고 타입과 DTO를 공유하도록 설계한다.
+
+
+3. USER AND AUTHORIZATION MODEL
+
+3.1 역할
+
+USER_ROLE
+- STUDENT
+- DANCER
+- ADMIN
+
+하나의 User가 MVP에서는 하나의 기본 역할을 가진다.
+향후 동일 계정에서 STUDENT와 DANCER 역할을 동시에 사용할 수 있도록 UserRole 조인 테이블로 확장 가능하게 설계하는 것이 좋다.
+
+3.2 인증 방식
+
+지원 로그인
+- Email + Password
+- Google OAuth
+- Apple Sign In
+- Kakao OAuth는 한국 시장 검증 후 추가 가능
+
+토큰
+- Access Token: 15분
+- Refresh Token: 14~30일
+- Refresh Token Rotation 적용
+- 모바일은 Secure Storage, 웹은 HttpOnly Secure Cookie 권장
+
+3.3 권한 규칙
+
+STUDENT
+- 공개 댄서 및 클래스 조회
+- 찜, 신청, 취소, 리뷰 작성
+- 자신의 신청 내역 조회
+
+DANCER
+- 자신의 댄서 프로필 수정
+- 자신의 영상과 클래스 CRUD
+- 자신의 클래스 신청자 조회
+- 신청 상태 변경
+
+ADMIN
+- 모든 리소스 조회
+- 검수, 숨김, 정지, 삭제
+- 메타데이터 관리
+
+모든 수정 API는 리소스 소유권 검증이 필요하다.
+
+
+4. CORE DOMAIN MODEL
+
+4.1 Entity 목록
+
+- User
+- StudentProfile
+- DancerProfile
+- Studio
+- Class
+- ClassSession
+- Booking
+- Review
+- DanceVideo
+- Song
+- Genre
+- Mood
+- Favorite
+- MediaAsset
+- Report
+- Notification
+
+4.2 User
+
+User
+- id: UUID
+- email: string, unique
+- passwordHash: string, nullable
+- role: enum
+- status: ACTIVE | SUSPENDED | DELETED
+- displayName: string
+- profileImageId: UUID, nullable
+- locale: string
+- timezone: string
+- createdAt
+- updatedAt
+- deletedAt, nullable
+
+4.3 StudentProfile
+
+StudentProfile
+- id: UUID
+- userId: UUID, unique
+- danceExperienceLevel:
+  - COMPLETE_BEGINNER
+  - GENRE_BEGINNER
+  - BASIC
+  - INTERMEDIATE
+  - ADVANCED
+- birthYear: integer, nullable
+- nationalityCode: string, nullable
+- preferredRegion: string, nullable
+- preferredLanguageCodes: string[]
+- preferredGenreIds: UUID[]
+- preferredMoodIds: UUID[]
+- soloAttendancePreference: boolean, nullable
+- touchPreference:
+  - NO_TOUCH
+  - ASK_BEFORE_TOUCH
+  - TOUCH_OK
+- createdAt
+- updatedAt
+
+민감 정보는 최소한으로 저장하고, 연령대나 국적 통계는 개인이 식별되지 않도록 집계한다.
+
+4.4 DancerProfile
+
+DancerProfile
+- id: UUID
+- userId: UUID, unique
+- stageName: string
+- bio: text
+- verificationStatus:
+  - DRAFT
+  - PENDING
+  - APPROVED
+  - REJECTED
+- careerYears: integer, nullable
+- region: string
+- languageCodes: string[]
+- lessonTypes: string[]
+  - PRIVATE
+  - GROUP
+  - ONE_DAY
+  - REGULAR
+  - CREW_CHOREOGRAPHY
+  - PERFORMANCE_DIRECTION
+- teachingStyles: string[]
+  - BASICS_FIRST
+  - CHOREOGRAPHY_FIRST
+  - DETAIL_FOCUSED
+  - EXPRESSION_FOCUSED
+  - FAST_PACED
+  - REPETITION_HEAVY
+- touchPolicy:
+  - NO_TOUCH
+  - ASK_BEFORE_TOUCH
+  - MAY_TOUCH_FOR_CORRECTION
+- genreIds: UUID[]
+- moodIds: UUID[]
+- instagramUrl: string, nullable
+- youtubeUrl: string, nullable
+- createdAt
+- updatedAt
+
+4.5 Studio
+
+Studio
+- id: UUID
+- ownerUserId: UUID, nullable
+- name: string
+- address: string
+- latitude: decimal
+- longitude: decimal
+- regionCode: string
+- phone: string, nullable
+- description: text, nullable
+- status: ACTIVE | INACTIVE
+- createdAt
+- updatedAt
+
+MVP에서는 스튜디오가 직접 계정을 가지지 않아도 되고, 관리자가 등록하거나 댄서가 클래스 생성 중 선택하도록 한다.
+
+4.6 Class
+
+Class
+- id: UUID
+- dancerId: UUID
+- studioId: UUID, nullable
+- title: string
+- description: text
+- status:
+  - DRAFT
+  - PUBLISHED
+  - CLOSED
+  - CANCELLED
+- genreId: UUID
+- targetExperienceLevel:
+  - COMPLETE_BEGINNER
+  - GENRE_BEGINNER
+  - BASIC
+  - INTERMEDIATE
+  - ADVANCED
+- classPurpose:
+  - HOBBY
+  - CHOREOGRAPHY
+  - BASICS
+  - FILMING
+  - PERFORMANCE
+- teachingPace:
+  - SLOW
+  - NORMAL
+  - FAST
+- beginnerFriendlyScore: decimal, nullable
+- psychologicalEntryScore: decimal, nullable
+- soloFriendlyScore: decimal, nullable
+- touchPolicy: enum
+- languageCodes: string[]
+- price: integer
+- currency: string
+- maxCapacity: integer
+- bookingType:
+  - INSTANT
+  - APPROVAL_REQUIRED
+  - EXTERNAL_LINK
+- externalBookingUrl: string, nullable
+- coverImageId: UUID, nullable
+- publishedAt: datetime, nullable
+- createdAt
+- updatedAt
+
+점수 필드는 초기에는 리뷰 집계 결과로 계산하며, 클래스 생성자가 직접 입력하지 않는다.
+
+4.7 ClassSession
+
+ClassSession
+- id: UUID
+- classId: UUID
+- startAt: datetime
+- endAt: datetime
+- capacityOverride: integer, nullable
+- status:
+  - SCHEDULED
+  - FULL
+  - CANCELLED
+  - COMPLETED
+- createdAt
+- updatedAt
+
+Class와 ClassSession을 분리해야 반복 수업과 날짜별 예약을 처리할 수 있다.
+
+4.8 Booking
+
+Booking
+- id: UUID
+- sessionId: UUID
+- studentUserId: UUID
+- status:
+  - PENDING
+  - CONFIRMED
+  - REJECTED
+  - CANCELLED_BY_STUDENT
+  - CANCELLED_BY_DANCER
+  - COMPLETED
+  - NO_SHOW
+- quantity: integer, default 1
+- paymentStatus:
+  - NOT_REQUIRED
+  - PENDING
+  - PAID
+  - REFUNDED
+  - FAILED
+- amount: integer
+- currency: string
+- requestedAt
+- confirmedAt, nullable
+- cancelledAt, nullable
+- createdAt
+- updatedAt
+
+Unique Constraint
+- sessionId + studentUserId
+- 동일 세션 중복 신청 방지
+
+동시 예약으로 정원을 초과하지 않도록 DB Transaction과 Row Lock 또는 원자적 업데이트가 필요하다.
+
+4.9 Review
+
+Review
+- id: UUID
+- bookingId: UUID, unique
+- classId: UUID
+- dancerId: UUID
+- studentUserId: UUID
+- overallRating: integer, 1~5
+- actualDifficulty: integer, 1~5
+- psychologicalEntryDifficulty: integer, 1~5
+- beginnerFriendly: integer, 1~5
+- soloFriendly: integer, 1~5
+- explanationClarity: integer, 1~5
+- repetitionLevel: integer, 1~5
+- energyLevel: integer, 1~5
+- touchExperience:
+  - NONE
+  - ASKED_BEFORE
+  - WITHOUT_ASKING
+  - NOT_APPLICABLE
+- comment: text, nullable
+- moderationStatus:
+  - PENDING
+  - PUBLISHED
+  - HIDDEN
+- createdAt
+- updatedAt
+
+리뷰는 COMPLETED 상태의 Booking에 대해서만 작성 가능하다.
+
+4.10 DanceVideo
+
+DanceVideo
+- id: UUID
+- dancerId: UUID
+- mediaAssetId: UUID
+- title: string
+- description: text, nullable
+- songId: UUID, nullable
+- visibility: PUBLIC | UNLISTED | PRIVATE
+- moderationStatus: PENDING | APPROVED | REJECTED
+- durationSeconds: integer
+- thumbnailAssetId: UUID
+- createdAt
+- updatedAt
+
+관계 테이블
+- DanceVideoGenre(videoId, genreId)
+- DanceVideoMood(videoId, moodId)
+
+하나의 영상에 여러 장르와 무드를 연결할 수 있도록 Many-to-Many로 설계한다.
+
+4.11 Song
+
+Song
+- id: UUID
+- title: string
+- normalizedTitle: string
+- artist: string
+- normalizedArtist: string
+- album: string, nullable
+- spotifyId: string, nullable
+- youtubeMusicId: string, nullable
+- instagramAudioId: string, nullable
+- createdAt
+- updatedAt
+
+중복 방지를 위해 normalizedTitle + normalizedArtist에 Unique Index를 검토한다.
+
+4.12 Genre / Mood
+
+Genre
+- id
+- code
+- nameKo
+- nameEn
+- parentId, nullable
+- sortOrder
+- isActive
+
+Mood
+- id
+- code
+- nameKo
+- nameEn
+- sortOrder
+- isActive
+
+예시 Mood Code
+- LYRICAL
+- DREAMY
+- INTENSE
+- EMOTIONAL
+- POWERFUL
+- SEXY
+- SOFT
+- FREE
+- BRIGHT
+- GROOVY
+
+4.13 Favorite
+
+Favorite
+- id
+- userId
+- targetType:
+  - DANCER
+  - CLASS
+  - VIDEO
+- targetId
+- createdAt
+
+Unique Constraint
+- userId + targetType + targetId
+
+4.14 MediaAsset
+
+MediaAsset
+- id
+- ownerUserId
+- type:
+  - IMAGE
+  - VIDEO
+- storageKey
+- mimeType
+- sizeBytes
+- width
+- height
+- durationSeconds, nullable
+- processingStatus:
+  - UPLOADING
+  - PROCESSING
+  - READY
+  - FAILED
+- createdAt
+
+클라이언트가 백엔드 서버를 경유해 대용량 영상을 업로드하지 않도록 Pre-signed URL 방식 사용을 권장한다.
+
+
+5. DATABASE RELATIONSHIP SUMMARY
+
+User 1:1 StudentProfile
+User 1:1 DancerProfile
+DancerProfile 1:N Class
+DancerProfile 1:N DanceVideo
+Studio 1:N Class
+Class 1:N ClassSession
+ClassSession 1:N Booking
+Student User 1:N Booking
+Booking 1:0..1 Review
+DanceVideo N:1 Song
+DanceVideo N:M Genre
+DanceVideo N:M Mood
+User 1:N Favorite
+User 1:N Notification
+
+주요 인덱스
+- User.email
+- DancerProfile.verificationStatus
+- Class.status
+- Class.genreId
+- Class.targetExperienceLevel
+- Class.studioId
+- ClassSession.startAt
+- Booking.sessionId + status
+- DanceVideo.songId
+- Song.normalizedTitle
+- Review.classId
+- Review.dancerId
+
+
+6. API DESIGN
+
+Base URL
+/api/v1
+
+6.1 Auth
+
+POST /auth/register
+POST /auth/login
+POST /auth/oauth/google
+POST /auth/oauth/apple
+POST /auth/refresh
+POST /auth/logout
+GET  /auth/me
+
+6.2 Student Profile
+
+GET   /students/me
+PUT   /students/me
+GET   /students/me/bookings
+GET   /students/me/favorites
+
+6.3 Dancer Profile
+
+POST  /dancers
+GET   /dancers
+GET   /dancers/{dancerId}
+PUT   /dancers/me
+POST  /dancers/me/submit-verification
+GET   /dancers/me/dashboard
+
+6.4 Classes
+
+POST   /classes
+GET    /classes
+GET    /classes/{classId}
+PUT    /classes/{classId}
+DELETE /classes/{classId}
+POST   /classes/{classId}/publish
+POST   /classes/{classId}/sessions
+PUT    /sessions/{sessionId}
+DELETE /sessions/{sessionId}
+
+GET /classes Query Parameters
+- q
+- genreId
+- moodId
+- region
+- targetExperienceLevel
+- soloFriendlyMin
+- beginnerFriendlyMin
+- touchPolicy
+- languageCode
+- startFrom
+- startTo
+- minPrice
+- maxPrice
+- sort
+- cursor
+- limit
+
+6.5 Booking
+
+POST /sessions/{sessionId}/bookings
+GET  /bookings/{bookingId}
+POST /bookings/{bookingId}/cancel
+POST /bookings/{bookingId}/approve
+POST /bookings/{bookingId}/reject
+POST /bookings/{bookingId}/complete
+
+예약 처리 시 서버 로직
+1. 인증 및 역할 확인
+2. Session 상태 확인
+3. 중복 예약 확인
+4. Confirmed + Pending 수량 합산
+5. 정원 검증
+6. Transaction 내 Booking 생성
+7. 필요 시 알림 Queue 등록
+
+6.6 Reviews
+
+POST /bookings/{bookingId}/review
+GET  /classes/{classId}/reviews
+GET  /dancers/{dancerId}/reviews
+PUT  /reviews/{reviewId}
+DELETE /reviews/{reviewId}
+
+6.7 Videos
+
+POST   /media/upload-url
+POST   /videos
+GET    /videos
+GET    /videos/{videoId}
+PUT    /videos/{videoId}
+DELETE /videos/{videoId}
+
+GET /videos Query Parameters
+- songId
+- songQuery
+- genreId
+- moodId
+- dancerId
+- cursor
+- limit
+
+6.8 Songs
+
+GET  /songs?q=
+GET  /songs/{songId}
+POST /songs
+PUT  /songs/{songId}
+
+일반 사용자는 검색만 가능하고, 생성은 댄서 요청 후 관리자 검수 방식이 안전하다.
+
+6.9 Search
+
+GET /search
+
+Query Parameters
+- q
+- type=ALL|CLASS|DANCER|VIDEO|SONG
+- genreId
+- moodId
+- region
+- experienceLevel
+- sort
+- cursor
+- limit
+
+응답 예시
+{
+  "classes": [],
+  "dancers": [],
+  "videos": [],
+  "songs": [],
+  "nextCursor": "..."
+}
+
+MVP에서는 리소스별 검색 API를 우선 구현하고, 통합 검색은 후순위로 두어도 된다.
+
+6.10 Favorites
+
+POST   /favorites
+DELETE /favorites/{favoriteId}
+
+6.11 Admin
+
+GET  /admin/dancers/pending
+POST /admin/dancers/{dancerId}/approve
+POST /admin/dancers/{dancerId}/reject
+GET  /admin/reports
+POST /admin/reports/{reportId}/resolve
+POST /admin/resources/{type}/{id}/hide
+
+
+7. SEARCH DESIGN
+
+7.1 MVP 검색
+
+PostgreSQL 기반
+- pg_trgm
+- Full Text Search
+- ILIKE는 소규모 데이터에서만 사용
+- normalizedTitle, stageName, class title에 검색용 인덱스 적용
+
+검색 우선순위 예시
+1. 정확한 노래 제목 일치
+2. 댄서명 정확 일치
+3. 클래스 제목 일치
+4. 장르 및 무드 태그
+5. 설명문 검색
+
+7.2 Song Search Flow
+
+사용자가 “열이올라요” 검색
+1. Song.normalizedTitle 검색
+2. 매칭 Song ID 조회
+3. 해당 Song과 연결된 DanceVideo 조회
+4. DanceVideo의 DancerProfile 조회
+5. 해당 댄서가 운영하는 공개 Class 조회
+6. 장르 및 무드 필터 적용
+7. 영상 카드 중심으로 결과 노출
+
+검색 결과 구조
+Song
+  -> Videos
+      -> Dancer
+          -> Available Classes
+
+7.3 Mood Search Flow
+
+1. Mood 태그 검색
+2. DanceVideoMood 조회
+3. 관련 영상과 댄서 계산
+4. 해당 Mood를 가진 클래스 조회
+5. 사용자 경험 수준과 지역에 따라 정렬
+
+7.4 추천 점수 MVP
+
+규칙 기반 점수 사용
+
+score =
+  genreMatch * 30
++ moodMatch * 20
++ experienceMatch * 20
++ regionMatch * 10
++ scheduleMatch * 10
++ beginnerFriendlyMatch * 5
++ languageMatch * 5
+
+정확한 가중치는 운영 데이터로 조정한다.
+개인화 모델은 충분한 클릭·찜·예약 데이터가 쌓인 후 도입한다.
+
+
+8. REVIEW AGGREGATION
+
+리뷰 데이터는 Class와 Dancer 프로필에 집계하여 제공한다.
+
+예시 집계 필드
+- averageOverallRating
+- averageActualDifficulty
+- averagePsychologicalEntryDifficulty
+- averageBeginnerFriendly
+- averageSoloFriendly
+- averageExplanationClarity
+- averageRepetitionLevel
+- averageEnergyLevel
+- touchPolicyConsistency
+
+집계 방식
+- 리뷰 생성 또는 수정 시 Queue에 Aggregate Job 등록
+- Worker가 집계 테이블 업데이트
+- 조회 시 매번 AVG 연산하지 않도록 별도 Summary Table 사용 가능
+
+ReviewSummary
+- targetType: CLASS | DANCER
+- targetId
+- reviewCount
+- aggregated JSON
+- updatedAt
+
+리뷰 수가 적을 때 과도한 확신을 주지 않도록 sampleCount를 화면에 함께 표시한다.
+
+
+9. FRONTEND APPLICATION STRUCTURE
+
+9.1 Web
+
+Next.js App Router 권장
+
+주요 Route
+/
+ /search
+ /songs/{songId}
+ /dancers/{dancerId}
+ /classes/{classId}
+ /bookings
+ /favorites
+ /onboarding/student
+ /onboarding/dancer
+ /dancer/dashboard
+ /dancer/classes
+ /dancer/videos
+ /admin
+
+웹은 검색 엔진 유입을 위해 공개 클래스, 댄서, 노래 페이지를 SSR 또는 ISR로 제공한다.
+
+9.2 Mobile
+
+React Native + Expo 권장
+
+주요 Bottom Tabs
+학생
+- Home
+- Search
+- Favorites
+- Bookings
+- Profile
+
+댄서
+- Dashboard
+- Classes
+- Videos
+- Requests
+- Profile
+
+9.3 공유 UI
+
+공유 가능한 요소
+- 디자인 토큰
+- API Client
+- DTO Type
+- Validation Schema
+- 검색 필터 정의
+- Enum Label
+- Analytics Event Name
+
+웹용 DOM 컴포넌트와 React Native 컴포넌트는 완전히 공유하기 어렵기 때문에, UI 코드보다 비즈니스 타입과 API 계층 공유를 우선한다.
+
+
+10. KEY SCREEN SPECIFICATION
+
+10.1 학생 온보딩
+
+입력
+- 춤 경험 수준
+- 관심 장르
+- 선호 무드
+- 선호 지역
+- 언어
+- 신체 접촉 선호
+- 혼자 참여 예정 여부
+
+저장
+StudentProfile
+
+완료 후
+추천 클래스 또는 검색 화면 이동
+
+10.2 검색 화면
+
+탭
+- 클래스
+- 댄서
+- 영상
+- 노래
+
+필터
+- 지역
+- 일정
+- 가격
+- 경험 수준
+- 장르
+- 무드
+- 초보 친화도
+- 혼자 참여 친화도
+- 강사 터치 정책
+- 언어
+
+URL Query와 상태를 동기화하여 웹에서 검색 결과 공유가 가능하도록 한다.
+
+10.3 클래스 상세
+
+표시
+- 클래스 기본 정보
+- 댄서 정보
+- 일정
+- 가격
+- 남은 정원
+- 실제 난이도
+- 심리적 진입 난이도
+- 초보 친화도
+- 혼자 참여 친화도
+- 강사 수업 스타일
+- 터치 정책
+- 언어
+- 수강생 리뷰
+- 신청 버튼
+
+10.4 노래 상세
+
+표시
+- 곡명과 아티스트
+- 관련 영상 Feed
+- 영상별 댄서
+- 장르 및 무드 태그
+- 해당 댄서의 현재 신청 가능한 클래스
+
+10.5 댄서 대시보드
+
+표시
+- 예정 클래스
+- 신규 신청
+- 승인 대기
+- 클래스별 정원
+- 최근 리뷰
+- 영상 조회수
+- 찜 수
+
+MVP에서는 분석 지표를 단순 카운트로 제공한다.
+
+
+11. MEDIA PROCESSING
+
+11.1 업로드 과정
+
+1. Client가 POST /media/upload-url 호출
+2. Backend가 Pre-signed Upload URL 반환
+3. Client가 Storage에 직접 업로드
+4. Client가 업로드 완료 API 호출
+5. Backend가 MediaAsset 상태를 PROCESSING으로 설정
+6. Queue Worker가 FFmpeg 처리
+7. 썸네일 생성 및 메타데이터 추출
+8. READY 상태로 변경
+9. DanceVideo 생성 가능
+
+11.2 권장 제한
+
+- 영상 길이: 최대 90초
+- 파일 크기: 최대 300MB
+- 허용 포맷: MP4, MOV
+- 출력 포맷: H.264 MP4
+- 썸네일: WebP
+- 이미지: JPEG, PNG, WebP
+
+11.3 주의사항
+
+외부 Instagram Reel URL만 저장하는 방식은 삭제, 권한, 임베드 정책 변경 위험이 있다.
+MVP에서는 사용자가 직접 업로드하거나 자신이 소유한 콘텐츠 링크를 등록하도록 한다.
+
+
+12. NOTIFICATION DESIGN
+
+Notification
+- id
+- userId
+- type
+- title
+- body
+- data JSON
+- readAt
+- createdAt
+
+주요 알림
+- 예약 신청 완료
+- 댄서 승인 또는 거절
+- 클래스 취소
+- 수업 시작 24시간 전
+- 리뷰 작성 요청
+- 댄서 계정 검수 완료
+
+채널
+- In-App 필수
+- Push Notification 선택
+- Email 선택
+
+모바일 Push는 Expo Notifications 또는 Firebase Cloud Messaging 사용 가능하다.
+
+
+13. PAYMENT DESIGN
+
+MVP 선택지 A
+- 플랫폼 외부 예약 링크
+- 결제 구현 없음
+- 가장 빠른 검증 가능
+
+MVP 선택지 B
+- 플랫폼 내부 신청만 관리
+- 현장 결제
+- paymentStatus = NOT_REQUIRED
+
+MVP 선택지 C
+- 국내 결제 연동
+- Toss Payments 또는 PortOne
+- 결제 Webhook 필요
+- 멱등성 키 적용
+- Webhook Signature 검증
+
+초기에는 A 또는 B로 시작하고, 예약 전환율이 검증된 후 C를 구현하는 것을 권장한다.
+
+
+14. SECURITY AND PRIVACY
+
+필수 항목
+- Password는 Argon2 또는 bcrypt 해시
+- Access Token 짧은 만료 시간
+- Refresh Token Rotation
+- API Rate Limiting
+- 파일 MIME Type 검증
+- 영상 업로드 확장자만 신뢰하지 않음
+- XSS 및 SQL Injection 방지
+- ORM 사용 시 Raw Query 최소화
+- 개인정보 조회 권한 제한
+- 관리자 작업 Audit Log 기록
+- Soft Delete 적용
+- 신고 및 차단 기능
+
+연령 및 국적 정보
+- 선택 입력
+- 공개 프로필에 개인값을 직접 노출하지 않음
+- 클래스 통계는 최소 표본 수 이상일 때만 노출
+- 예: 리뷰 또는 참여 데이터 5건 미만이면 연령대 통계 비공개
+
+
+15. NON-FUNCTIONAL REQUIREMENTS
+
+성능
+- 일반 API 응답 P95 500ms 이하 목표
+- 검색 API P95 1초 이하
+- 이미지 CDN 제공
+- 영상 Adaptive Streaming은 트래픽 증가 후 도입
+
+가용성
+- MVP 99.5% 목표
+- DB 자동 백업
+- Storage Versioning 또는 복구 정책
+
+확장성
+- Stateless API
+- Worker 분리
+- Media Processing Queue 분리
+- 검색 엔진은 추후 별도 서비스로 교체 가능
+
+접근성
+- 웹 WCAG 기본 준수
+- 이미지 대체 텍스트
+- 키보드 탐색
+- 충분한 색 대비
+
+국제화
+- 문자열 하드코딩 금지
+- ko-KR 우선
+- en-US 추가 가능 구조
+- 날짜와 시간은 DB에서 UTC 저장
+- 클라이언트에서 사용자 Timezone으로 표시
+
+
+16. ANALYTICS EVENT
+
+필수 이벤트
+- sign_up_completed
+- onboarding_completed
+- search_submitted
+- search_filter_applied
+- song_viewed
+- dancer_viewed
+- class_viewed
+- video_played
+- favorite_added
+- booking_started
+- booking_completed
+- booking_cancelled
+- review_submitted
+- dancer_profile_created
+- class_published
+- video_uploaded
+
+분석 도구
+- PostHog
+- Amplitude
+- Firebase Analytics
+
+사용자 식별값에는 이메일 대신 내부 User ID 사용.
+
+
+17. ERROR HANDLING
+
+표준 응답
+
+성공
+{
+  "data": {},
+  "meta": {}
+}
+
+실패
+{
+  "error": {
+    "code": "CLASS_FULL",
+    "message": "해당 클래스의 정원이 마감되었습니다.",
+    "details": {}
+  }
+}
+
+주요 Error Code
+- UNAUTHORIZED
+- FORBIDDEN
+- RESOURCE_NOT_FOUND
+- VALIDATION_ERROR
+- DANCER_NOT_VERIFIED
+- CLASS_NOT_PUBLISHED
+- SESSION_ALREADY_STARTED
+- CLASS_FULL
+- DUPLICATE_BOOKING
+- BOOKING_NOT_CANCELLABLE
+- REVIEW_NOT_ALLOWED
+- MEDIA_NOT_READY
+
+HTTP Status와 비즈니스 Error Code를 함께 사용한다.
+
+
+18. TEST STRATEGY
+
+Unit Test
+- 예약 정원 검증
+- 예약 상태 전환
+- 리뷰 작성 조건
+- 추천 점수
+- 권한 검증
+
+Integration Test
+- Auth
+- Class CRUD
+- Session CRUD
+- Booking Flow
+- Review Flow
+- Video Upload Metadata
+
+E2E Test
+- 학생 회원가입 → 검색 → 신청 → 리뷰
+- 댄서 회원가입 → 검수 → 클래스 생성 → 신청 승인
+- 노래 검색 → 영상 → 댄서 → 클래스 진입
+
+도구
+- Backend: Jest
+- Web: Playwright
+- Mobile: Maestro 또는 Detox
+- API: Supertest
+
+
+19. DEPLOYMENT ENVIRONMENTS
+
+Environment
+- local
+- development
+- staging
+- production
+
+각 환경별 분리
+- Database
+- Storage Bucket
+- OAuth Callback
+- API Key
+- Analytics Project
+
+CI/CD
+1. Pull Request
+2. Lint
+3. Type Check
+4. Unit Test
+5. Build
+6. Preview Deploy
+7. Main Merge
+8. Staging Deploy
+9. Manual Approval
+10. Production Deploy
+
+DB Migration
+- Prisma Migration
+- Production 적용 전 Backup
+- Breaking Change는 단계적 배포
+
+
+20. MVP IMPLEMENTATION ORDER
+
+Phase 1. Foundation
+- Monorepo
+- Auth
+- User Role
+- Database
+- Storage
+- Admin 기본 구조
+
+Phase 2. Dancer Supply
+- Dancer Profile
+- Verification
+- Genre / Mood Metadata
+- Video Upload
+- Class CRUD
+- ClassSession
+
+Phase 3. Student Discovery
+- Student Profile
+- Class Search
+- Dancer Search
+- Song Search
+- Video Feed
+- Favorites
+
+Phase 4. Marketplace Transaction
+- Booking
+- Capacity Control
+- Booking Status
+- Notifications
+- Review
+
+Phase 5. Quality and Launch
+- Admin Moderation
+- Analytics
+- Error Monitoring
+- SEO
+- App Store / Play Store 배포
+- 운영 대시보드
+
+추천 개발 우선순위는 댄서와 클래스 데이터를 먼저 확보한 뒤 학생 검색 기능을 붙이는 것이다.
+검색할 콘텐츠가 없는 상태에서 학생 앱부터 만드는 것은 피해야 한다.
+
+
+21. MVP ACCEPTANCE CRITERIA
+
+다음 조건을 만족하면 MVP 출시 가능 상태로 판단한다.
+
+- 학생과 댄서가 서로 다른 온보딩을 완료할 수 있다.
+- 승인된 댄서만 공개 프로필과 클래스를 게시할 수 있다.
+- 댄서가 영상, 노래, 장르, 무드 정보를 등록할 수 있다.
+- 학생이 노래, 장르, 무드, 지역, 수준으로 검색할 수 있다.
+- 학생이 클래스 세션에 신청할 수 있다.
+- 정원을 초과한 예약이 생성되지 않는다.
+- 댄서가 신청을 승인 또는 거절할 수 있다.
+- 완료된 예약에 대해서만 리뷰를 작성할 수 있다.
+- 클래스 상세에서 심리적 진입 관련 리뷰 집계가 표시된다.
+- 웹과 모바일이 동일 API와 동일 계정 데이터를 사용한다.
+- 관리자에게 댄서 검수와 신고 처리 기능이 제공된다.
+
+
+22. OPEN DECISIONS
+
+개발 시작 전 확정해야 할 항목
+
+1. 예약 방식
+- 외부 링크
+- 플랫폼 내 신청
+- 플랫폼 내 결제
+
+2. 댄서 검수 기준
+- 신분 확인
+- SNS 또는 경력 확인
+- 관리자 수동 승인
+
+3. 클래스 주최 주체
+- 댄서
+- 스튜디오
+- 둘 다
+
+4. 영상 저장 방식
+- 직접 업로드
+- 외부 링크
+- 혼합
+
+5. 지역 범위
+- 서울 단일 지역
+- 수도권
+- 전국
+
+6. 앱 개발 방식
+- Expo Managed Workflow
+- React Native Bare Workflow
+
+7. 웹과 앱 동시 출시 여부
+- 웹 우선
+- 모바일 우선
+- 병행
+
+
+23. FINAL IMPLEMENTATION SUMMARY
+
+개발 관점에서 DanceBridge의 핵심은 다음 네 가지 관계를 안정적으로 구현하는 것이다.
+
+1. Dancer -> DanceVideo -> Song / Genre / Mood
+2. Dancer -> Class -> ClassSession
+3. Student -> Booking -> Review
+4. Search Query -> Video / Dancer / Class Result
+
+MVP는 AI 플랫폼이 아니라 구조화된 마켓플레이스다.
+처음부터 자동 영상 분석이나 복잡한 추천 모델을 구현하지 않는다.
+
+우선 사용자가 직접 입력한 태그와 구조화된 리뷰를 사용해
+- 수강생이 자신에게 맞는 클래스를 찾을 수 있는지
+- 댄서가 새로운 수강생에게 발견되는지
+- 노래 검색이 실제 예약으로 연결되는지
+
+세 가지를 검증한다.
+
+검증 후 AI, 결제, 개인화 추천, 공연 및 프로젝트 매칭으로 확장한다.
