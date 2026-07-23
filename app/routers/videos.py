@@ -3,16 +3,9 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
-from app.dependencies import CurrentUser, require_dancer
+from app.dependencies import CurrentUser, get_own_dancer, require_dancer
 
 router = APIRouter(prefix="/videos", tags=["videos"])
-
-
-def _get_own_dancer(db: Session, current: CurrentUser) -> models.Dancer:
-    dancer = db.query(models.Dancer).filter(models.Dancer.user_id == current.user.id).first()
-    if dancer is None:
-        raise HTTPException(status_code=400, detail="Create a dancer profile first")
-    return dancer
 
 
 @router.post("", response_model=schemas.VideoOut, status_code=201)
@@ -21,7 +14,7 @@ def create_video(
     db: Session = Depends(get_db),
     current: CurrentUser = Depends(require_dancer),
 ):
-    dancer = _get_own_dancer(db, current)
+    dancer = get_own_dancer(db, current)
 
     db_video = models.Video(dancer_id=dancer.id, instagram_url=video.instagram_url)
     db.add(db_video)
@@ -44,7 +37,7 @@ def delete_video(
     db: Session = Depends(get_db),
     current: CurrentUser = Depends(require_dancer),
 ):
-    dancer = _get_own_dancer(db, current)
+    dancer = get_own_dancer(db, current)
     db_video = db.query(models.Video).filter(models.Video.id == video_id).first()
     if db_video is None:
         raise HTTPException(status_code=404, detail="Video not found")

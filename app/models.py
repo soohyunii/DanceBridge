@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -70,3 +70,17 @@ class Class(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     dancer = relationship("Dancer", back_populates="classes")
+
+
+class Enrollment(Base):
+    __tablename__ = "enrollments"
+    __table_args__ = (UniqueConstraint("student_id", "class_id"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id"), index=True, nullable=False)
+    class_id = Column(Integer, ForeignKey("classes.id"), index=True, nullable=False)
+    status = Column(String, nullable=False, default="pending")
+    created_at = Column(DateTime, server_default=func.now())
+
+    student = relationship("Student")
+    dance_class = relationship("Class")

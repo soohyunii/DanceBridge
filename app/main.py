@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 from app import models
 from app.database import engine
-from app.routers import auth, classes, dancers, students, videos
+from app.routers import auth, classes, dancers, enrollments, students, videos
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -12,6 +12,7 @@ app.include_router(dancers.router)
 app.include_router(students.router)
 app.include_router(classes.router)
 app.include_router(videos.router)
+app.include_router(enrollments.router)
 
 
 @app.get("/health")

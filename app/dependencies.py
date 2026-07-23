@@ -54,3 +54,17 @@ def require_student(current: CurrentUser = Depends(get_current_user)) -> Current
             detail="This action requires logging in with the student role",
         )
     return current
+
+
+def get_own_dancer(db: Session, current: CurrentUser) -> models.Dancer:
+    dancer = db.query(models.Dancer).filter(models.Dancer.user_id == current.user.id).first()
+    if dancer is None:
+        raise HTTPException(status_code=400, detail="Create a dancer profile first")
+    return dancer
+
+
+def get_own_student(db: Session, current: CurrentUser) -> models.Student:
+    student = db.query(models.Student).filter(models.Student.user_id == current.user.id).first()
+    if student is None:
+        raise HTTPException(status_code=400, detail="Create a student profile first")
+    return student

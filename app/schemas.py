@@ -100,3 +100,25 @@ class ClassOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+EnrollmentStatus = Literal["pending", "approved", "cancelled"]
+
+
+class EnrollmentCreate(BaseModel):
+    class_id: int
+
+
+class EnrollmentStatusUpdate(BaseModel):
+    status: Literal["approved", "cancelled"]
+
+
+class EnrollmentOut(BaseModel):
+    id: int
+    student_id: int
+    class_id: int
+    status: EnrollmentStatus
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
