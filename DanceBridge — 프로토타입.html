@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<!-- saved from url=(0059)file:///C:/Users/happy/Downloads/dancebridge_prototype.html -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DanceBridge — 프로토타입</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./DanceBridge — 프로토타입_files/css2" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B1420;
+    --ink-soft:#6B5F68;
+    --paper:#ECE6E3;
+    --surface:#FBF7F5;
+    --line:rgba(27,20,32,.12);
+    --line-strong:rgba(27,20,32,.22);
+    --student:#4F46E5;
+    --student-soft:#E7E5FB;
+    --dancer:#E8412F;
+    --dancer-soft:#FCE1DC;
+    --gold:#B4841C;
+    --gold-soft:#F3E6C4;
+    --good:#2E7D4F;
+    --radius:18px;
+    --radius-sm:10px;
+    --shadow:0 1px 2px rgba(27,20,32,.06), 0 8px 24px -12px rgba(27,20,32,.18);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Noto Sans KR',sans-serif; font-weight:400;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Gowun Batang',serif; font-weight:700; letter-spacing:-0.01em;}
+  .wordmark{font-family:'Fraunces',serif; font-style:italic; font-weight:600;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  a{color:inherit; text-decoration:none;}
+  button{font-family:inherit; cursor:pointer;}
+  img,svg{display:block;}
+  .container{max-width:1100px; margin:0 auto; padding:0 24px;}
+  @media (max-width:640px){ .container{padding:0 16px;} }
+
+  /* ---------- proto switcher ---------- */
+  #protoNav{
+    background:var(--ink); color:#fff; font-size:13px;
+    display:flex; align-items:center; gap:10px; overflow-x:auto;
+    padding:9px 16px; white-space:nowrap;
+  }
+  #protoNav .label{opacity:.55; margin-right:2px; flex:none;}
+  #protoNav button{
+    background:transparent; border:1px solid rgba(255,255,255,.25); color:#fff;
+    padding:5px 12px; border-radius:999px; font-size:12.5px; flex:none;
+    transition:background .15s, border-color .15s;
+  }
+  #protoNav button.active{background:#fff; color:var(--ink); border-color:#fff; font-weight:600;}
+  #protoNav button:hover:not(.active){border-color:rgba(255,255,255,.6);}
+
+  /* ---------- app header ---------- */
+  header.app{
+    position:sticky; top:0; z-index:20; background:rgba(236,230,227,.88);
+    backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+  }
+  .app-header-inner{display:flex; align-items:center; justify-content:space-between; padding:16px 0; gap:16px;}
+  .logo{font-size:22px; display:flex; align-items:baseline; gap:2px;}
+  .logo .db{font-family:'Fraunces',serif; font-style:italic; font-weight:600; font-size:23px;}
+  .logo .sub{font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--ink-soft); margin-left:8px; letter-spacing:.04em;}
+  nav.primary{display:flex; gap:4px;}
+  nav.primary button{
+    background:transparent; border:none; color:var(--ink-soft); font-size:15px;
+    padding:8px 14px; border-radius:999px; font-weight:500; transition:background .15s,color .15s;
+  }
+  nav.primary button.active,nav.primary button:hover{background:var(--surface); color:var(--ink);}
+  .role-toggle{display:flex; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:3px; gap:2px;}
+  .role-toggle button{border:none; background:transparent; font-size:12.5px; padding:6px 11px; border-radius:999px; color:var(--ink-soft); font-weight:600;}
+  .role-toggle button.active.student{background:var(--student); color:#fff;}
+  .role-toggle button.active.dancer{background:var(--dancer); color:#fff;}
+  @media (max-width:760px){ nav.primary{display:none;} }
+
+  main{padding-bottom:80px;}
+
+  /* ---------- buttons / chips ---------- */
+  .btn{display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border-radius:999px; font-size:15px; font-weight:600; border:1.5px solid transparent; transition:transform .12s, box-shadow .12s, opacity .12s;}
+  .btn:active{transform:scale(.97);}
+  .btn-student{background:var(--student); color:#fff;}
+  .btn-student:hover{box-shadow:0 6px 18px -6px rgba(79,70,229,.55);}
+  .btn-dancer{background:var(--dancer); color:#fff;}
+  .btn-dancer:hover{box-shadow:0 6px 18px -6px rgba(232,65,47,.55);}
+  .btn-ghost{background:transparent; border-color:var(--line-strong); color:var(--ink);}
+  .btn-ghost:hover{background:var(--surface);}
+  .btn-ghost-light{background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.35); color:#fff;}
+  .btn-ghost-light:hover{background:rgba(255,255,255,.16);}
+  .btn-sm{padding:8px 15px; font-size:13px;}
+
+  .chip{
+    display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:999px;
+    border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink);
+    font-size:13.5px; font-weight:500; transition:background .15s,border-color .15s,color .15s;
+  }
+  .chip:hover{border-color:var(--ink);}
+  .chip.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .chip.tone-student.active{background:var(--student); border-color:var(--student);}
+  .chip.tone-dancer.active{background:var(--dancer); border-color:var(--dancer);}
+  .tag{display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; background:var(--gold-soft); color:#7a5a10;}
+  .tag.mood{background:var(--dancer-soft); color:#9c2f21;}
+  .tag.genre{background:var(--student-soft); color:#3a34ad;}
+
+  /* ---------- sections ---------- */
+  .section{padding:56px 0;}
+  .section-head{margin-bottom:28px;}
+  .eyebrow{font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:10px; display:block;}
+  .section-title{font-size:clamp(22px,3vw,30px); margin:0 0 8px;}
+  .section-desc{color:var(--ink-soft); font-size:15px; max-width:560px; line-height:1.6; margin:0;}
+
+  /* ---------- hero ---------- */
+  .hero{padding:52px 0 20px; display:grid; grid-template-columns:1.05fr .95fr; gap:40px; align-items:center;}
+  @media (max-width:860px){ .hero{grid-template-columns:1fr; gap:28px;} }
+  .hero h1{font-size:clamp(30px,4.4vw,46px); line-height:1.24; margin:0 0 20px;}
+  .hero h1 em{font-style:italic; font-family:'Fraunces',serif; color:var(--dancer); font-weight:600;}
+  .hero p{font-size:16.5px; line-height:1.7; color:var(--ink-soft); margin:0 0 28px; max-width:480px;}
+  .hero-ctas{display:flex; gap:12px; flex-wrap:wrap;}
+  .bridge-wrap{background:var(--surface); border:1px solid var(--line); border-radius:24px; padding:18px; box-shadow:var(--shadow);}
+  .bridge-caption{display:flex; justify-content:space-between; font-size:12px; color:var(--ink-soft); margin-top:6px; font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- persona / discovery cards ---------- */
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  @media (max-width:860px){ .grid-3{grid-template-columns:1fr;} }
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow); transition:transform .15s, box-shadow .15s;}
+  .card:hover{transform:translateY(-3px);}
+  .persona-card .num{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-soft); display:block; margin-bottom:10px;}
+  .persona-card h3{font-size:18px; margin:0 0 10px;}
+  .persona-card ul{margin:0; padding-left:18px; color:var(--ink-soft); font-size:13.8px; line-height:1.75;}
+
+  .discover-card{cursor:pointer;}
+  .discover-card .ic{width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:18px; margin-bottom:14px;}
+  .discover-card h3{font-size:17px; margin:0 0 8px;}
+  .discover-card p{font-size:13.6px; color:var(--ink-soft); line-height:1.6; margin:0 0 14px;}
+  .discover-card .ex{display:flex; flex-wrap:wrap; gap:6px;}
+
+  /* ---------- dancer split section ---------- */
+  .split-dark{background:var(--ink); color:#fff; border-radius:28px; padding:44px; display:grid; grid-template-columns:1fr 1fr; gap:36px; align-items:center;}
+  @media (max-width:860px){ .split-dark{grid-template-columns:1fr; padding:28px;} }
+  .split-dark .eyebrow{color:rgba(255,255,255,.55);}
+  .split-dark h2{color:#fff; font-size:clamp(22px,3vw,30px);}
+  .split-dark p{color:rgba(255,255,255,.68); line-height:1.7; font-size:15px;}
+  .mini-profile{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15); border-radius:16px; padding:20px;}
+  .mini-profile .top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
+  .mini-profile .name{font-family:'Fraunces',serif; font-style:italic; font-weight:600; font-size:20px;}
+  .mini-profile .rating{font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--gold-soft);}
+  .mini-profile .row{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
+
+  /* ---------- footer message ---------- */
+  .closing{text-align:center; padding:70px 0 40px;}
+  .closing .msg{font-size:clamp(20px,3vw,28px); font-family:'Gowun Batang',serif; line-height:1.6;}
+  .closing .msg span{display:block;}
+  .closing .note{margin-top:18px; font-size:12.5px; color:var(--ink-soft); font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- search view ---------- */
+  .search-head{padding:36px 0 18px;}
+  .searchbar{display:flex; gap:10px; margin-top:18px;}
+  .searchbar input{flex:1; padding:14px 18px; border-radius:999px; border:1.5px solid var(--line-strong); background:var(--surface); font-size:15px; color:var(--ink); outline:none;}
+  .searchbar input:focus{border-color:var(--student);}
+  .tabs{display:flex; gap:6px; margin:22px 0 0; border-bottom:1px solid var(--line);}
+  .tabs button{background:transparent; border:none; padding:12px 18px; font-size:14.5px; font-weight:600; color:var(--ink-soft); border-bottom:2px solid transparent; margin-bottom:-1px;}
+  .tabs button.active{color:var(--ink); border-color:var(--ink);}
+  .filters-card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:18px 20px; margin:20px 0;}
+  .filter-group{margin-bottom:14px;}
+  .filter-group:last-child{margin-bottom:0;}
+  .filter-group .flabel{font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); font-family:'JetBrains Mono',monospace; margin-bottom:8px; display:block;}
+  .filter-row{display:flex; flex-wrap:wrap; gap:7px;}
+  .quick-row{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px;}
+  .quick-row button.chip{background:transparent;}
+  .result-meta{display:flex; justify-content:space-between; align-items:center; margin:22px 0 14px; color:var(--ink-soft); font-size:13.5px; font-family:'JetBrains Mono',monospace;}
+  .clear-link{background:none; border:none; color:var(--student); font-size:13px; font-weight:600; font-family:'Noto Sans KR',sans-serif;}
+  .results-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px;}
+  @media (max-width:760px){ .results-grid{grid-template-columns:1fr;} }
+
+  .class-card,.dancer-card,.video-card{cursor:pointer; position:relative;}
+  .class-card .thumb,.video-card .thumb{height:96px; border-radius:12px; margin-bottom:14px; background:linear-gradient(135deg,var(--student-soft),var(--dancer-soft)); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-soft);}
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .class-card h3,.dancer-card h3{font-size:16.5px; margin:0 0 6px; line-height:1.4;}
+  .card-sub{font-size:13px; color:var(--ink-soft); margin-bottom:10px;}
+  .heart{background:none; border:none; font-size:18px; color:var(--ink-soft); line-height:1; padding:2px;}
+  .heart.on{color:var(--dancer);}
+  .card-tags{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
+  .card-foot{display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:12px;}
+  .price{font-weight:700; color:var(--ink); font-size:14.5px;}
+  .avatar{width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,var(--student),var(--dancer)); flex:none; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:15px; font-family:'Fraunces',serif;}
+  .dancer-card .head{display:flex; gap:12px; align-items:center; margin-bottom:12px;}
+  .rating-inline{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--gold);}
+
+  /* ---------- detail views ---------- */
+  .breadcrumb{font-size:13px; color:var(--ink-soft); display:flex; align-items:center; gap:6px; margin:24px 0 6px;}
+  .breadcrumb button{background:none;border:none;color:var(--student);font-weight:600;font-size:13px;padding:0;}
+  .detail-head{padding:14px 0 30px; border-bottom:1px solid var(--line); margin-bottom:32px;}
+  .badges-row{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 20px;}
+  .detail-title{font-size:clamp(24px,3.4vw,34px); margin:6px 0 10px;}
+  .detail-grid{display:grid; grid-template-columns:1.6fr 1fr; gap:36px;}
+  @media (max-width:860px){ .detail-grid{grid-template-columns:1fr;} }
+  .meta-strip{display:flex; flex-wrap:wrap; gap:22px; margin-top:16px; font-size:14px;}
+  .meta-strip div span.k{display:block; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:3px;}
+  .meta-strip div span.v{font-weight:600;}
+
+  .score-block{margin-bottom:26px;}
+  .score-row{display:flex; align-items:center; gap:14px; margin-bottom:12px;}
+  .score-row .label{width:150px; flex:none; font-size:13.5px; color:var(--ink-soft);}
+  .score-track{flex:1; height:8px; background:var(--line); border-radius:99px; overflow:hidden;}
+  .score-fill{height:100%; border-radius:99px; background:var(--student);}
+  .score-fill.low-good{background:var(--good);}
+  .score-val{width:34px; text-align:right; font-family:'JetBrains Mono',monospace; font-size:12.5px; flex:none; color:var(--ink-soft);}
+
+  .info-panel{background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:22px; box-shadow:var(--shadow); position:sticky; top:96px;}
+  .info-panel .price-big{font-size:26px; font-weight:700; margin-bottom:2px;}
+  .info-panel .price-note{font-size:12.5px; color:var(--ink-soft); margin-bottom:18px;}
+  .info-list{list-style:none; margin:0 0 20px; padding:0; font-size:14px;}
+  .info-list li{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px dashed var(--line);}
+  .info-list li span:first-child{color:var(--ink-soft);}
+  .dancer-mini{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:26px; cursor:pointer;}
+  .dancer-mini:hover{border-color:var(--line-strong);}
+
+  .review{padding:18px 0; border-bottom:1px solid var(--line);}
+  .review:last-child{border-bottom:none;}
+  .review .who{font-size:12.5px; color:var(--ink-soft); font-family:'JetBrains Mono',monospace; margin-bottom:8px;}
+  .review p{margin:0; font-size:14.5px; line-height:1.7;}
+
+  .dancer-header{display:flex; gap:22px; align-items:center; flex-wrap:wrap;}
+  .avatar-lg{width:84px; height:84px; border-radius:50%; background:linear-gradient(135deg,var(--student),var(--dancer)); display:flex; align-items:center; justify-content:center; color:#fff; font-size:30px; font-family:'Fraunces',serif; font-weight:600; flex:none;}
+  .dancer-name{font-size:clamp(24px,3.4vw,32px); margin:0 0 4px;}
+  .dancer-stage{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--ink-soft); letter-spacing:.04em;}
+  .attr-block{margin-bottom:26px;}
+  .attr-block .flabel{font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); font-family:'JetBrains Mono',monospace; margin-bottom:9px; display:block;}
+
+  .song-hero{padding:30px 0; border-bottom:1px solid var(--line); margin-bottom:30px;}
+  .song-hero .k{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em;}
+  .song-hero h1{font-size:clamp(28px,4vw,42px); margin:8px 0 4px;}
+  .song-hero .artist{font-size:16px; color:var(--ink-soft);}
+  .video-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:18px;}
+  @media (max-width:760px){ .video-grid{grid-template-columns:1fr;} }
+  .video-card .thumb{height:150px; font-size:12px;}
+
+  /* ---------- toast ---------- */
+  #toast{
+    position:fixed; left:50%; bottom:28px; transform:translate(-50%,20px);
+    background:var(--ink); color:#fff; padding:13px 22px; border-radius:999px;
+    font-size:14px; box-shadow:0 12px 30px -8px rgba(0,0,0,.4); opacity:0; pointer-events:none;
+    transition:opacity .25s, transform .25s; z-index:50; white-space:nowrap;
+  }
+  #toast.show{opacity:1; transform:translate(-50%,0);}
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important;}
+  }
+</style>
+</head>
+<body>
+
+  <div id="protoNav">
+    <span class="label">프로토타입 화면</span>
+    <button data-view="home" class="active">홈</button>
+    <button data-view="search">검색</button>
+    <button data-view="song">노래 상세</button>
+    <button data-view="dancer" data-id="d1">댄서 프로필</button>
+    <button data-view="class" data-id="c1">클래스 상세</button>
+  </div>
+
+  <header class="app">
+    <div class="container app-header-inner">
+      <div class="logo">
+        <span class="db">DanceBridge</span>
+        <span class="sub">가칭 · v0.1 PROTOTYPE</span>
+      </div>
+      <nav class="primary">
+        <button data-view="home" class="active">홈</button>
+        <button data-view="search">검색</button>
+      </nav>
+      <div class="role-toggle">
+        <button class="role-btn student active" data-role="student">수강생</button>
+        <button class="role-btn dancer" data-role="dancer">댄서</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="app">
+  <div class="container">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">DANCEBRIDGE · 가칭</span>
+        <h1>“내가 가도 <em>괜찮은</em> 수업”을 찾는 곳,<br>그리고 내 춤이 <em>정확히</em> 발견되는 곳</h1>
+        <p>기존 댄스 플랫폼은 지역·가격·장르만 보여줍니다. DanceBridge는 수강생이 신청 직전 가장 크게 느끼는 심리적 불안에 답하고, 댄서에게는 SNS 알고리즘이 아닌 정확한 매칭으로 발견될 기회를 제공합니다.</p>
+        <div class="hero-ctas" style="">
+          <button class="btn btn-student" data-go="search" data-tab="class">수강생으로 시작 — 수업 둘러보기</button>
+          <button class="btn btn-ghost" data-go="dancer" data-id="d1">댄서로 시작 — 프로필 예시 보기</button>
+        </div>
+      </div>
+      <div>
+        <div class="bridge-wrap">
+          
+  <svg viewBox="0 0 520 200" width="100%" height="auto" role="img" aria-label="수강생과 댄서를 잇는 다리 일러스트">
+    <defs>
+      <lineargradient id="pathGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#4F46E5"></stop>
+        <stop offset="1" stop-color="#E8412F"></stop>
+      </lineargradient>
+    </defs>
+    <path id="bridgePath" d="M96,142 C170,66 350,66 424,86" fill="none" stroke="url(#pathGrad)" stroke-width="2.5" stroke-dasharray="1 9" stroke-linecap="round"></path>
+    <circle cx="96" cy="142" r="34" fill="#4F46E5"></circle>
+    <text x="96" y="149" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="26" fill="#fff">?</text>
+    <text x="96" y="196" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#6B5F68">망설이는 수강생</text>
+    <circle cx="424" cy="86" r="34" fill="#E8412F"></circle>
+    <path transform="translate(424,86)" d="M0,-13 L3.4,-4.4 12.4,-4 5.2,1.8 7.6,10.8 0,5.6 -7.6,10.8 -5.2,1.8 -12.4,-4 -3.4,-4.4 Z" fill="#fff"></path>
+    <text x="424" y="140" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#6B5F68">발견되는 댄서</text>
+    <circle r="5" fill="#B4841C"><animatemotion dur="4.2s" repeatCount="indefinite" begin="0s"><mpath href="#bridgePath"></mpath></animatemotion></circle>
+    <circle r="4" fill="#4F46E5"><animatemotion dur="4.2s" repeatCount="indefinite" begin="1.4s"><mpath href="#bridgePath"></mpath></animatemotion></circle>
+    <circle r="4" fill="#E8412F"><animatemotion dur="4.2s" repeatCount="indefinite" begin="2.8s"><mpath href="#bridgePath"></mpath></animatemotion></circle>
+  </svg>
+          <div class="bridge-caption"><span>UNCERTAIN</span><span>DISCOVERED</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <span class="eyebrow">02 · 세 가지 불안</span>
+        <h2 class="section-title">수강생의 불안은 경험 수준마다 다릅니다</h2>
+        <p class="section-desc">‘초급’이라는 한 단어로는 설명되지 않는 세 가지 상태를 구분해서 보여줍니다.</p>
+      </div>
+      <div class="grid-3">
+        <div class="card persona-card">
+          <span class="num">01 · 완전 초보</span>
+          <h3>“나만 못 따라갈까봐”</h3>
+          <ul>
+            <li>혼자 수업에 가는 것에 대한 두려움</li>
+            <li>거울 앞에서 틀리는 모습에 대한 창피함</li>
+            <li>‘초급’ 표시가 실제로 초보에게 맞는지 알 수 없음</li>
+          </ul>
+        </div>
+        <div class="card persona-card">
+          <span class="num">02 · 경험자</span>
+          <h3>“내 수준에 맞는 수업일까”</h3>
+          <ul>
+            <li>진도와 피드백 수준을 판단하기 어려움</li>
+            <li>취미형인지 촬영·공연 목표형인지 불명확</li>
+            <li>기본기 중심인지 진도 중심인지 알기 어려움</li>
+          </ul>
+        </div>
+        <div class="card persona-card">
+          <span class="num">03 · 타 장르 입문</span>
+          <h3>“춤은 처음이 아닌데, 이 장르는 처음”</h3>
+          <ul>
+            <li>‘완전 초보반’과 ‘장르 입문반’이 구분되지 않음</li>
+            <li>기존 경험을 인정해주는 수업을 찾기 어려움</li>
+            <li>예: 힙합 경험자가 왁킹을 처음 배우는 경우</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <span class="eyebrow">03 · 발견 경로</span>
+        <h2 class="section-title">장르를 몰라도, 세 가지 방법으로 찾을 수 있어요</h2>
+      </div>
+      <div class="grid-3">
+        <div class="card discover-card" data-go="search" data-tab="song">
+          <div class="ic" style="background:var(--student-soft); color:var(--student);">♪</div>
+          <h3>노래로 찾기</h3>
+          <p>좋아하는 노래 하나로 원곡 안무, 힐댄스, 코레오, 퍼포먼스까지 서로 다른 해석을 비교해요.</p>
+          <div class="ex"><span class="tag">예: 선미 〈열이올라요〉</span></div>
+        </div>
+        <div class="card discover-card" data-go="search" data-tab="class">
+          <div class="ic" style="background:var(--gold-soft); color:var(--gold);">#</div>
+          <h3>장르로 찾기</h3>
+          <p>‘초급·중급·고급’ 대신 완전 초보 / 장르 입문 / 경험 보유 / 표현 중심 등으로 세분화합니다.</p>
+          <div class="ex"><span class="tag genre">힐댄스</span><span class="tag genre">왁킹</span></div>
+        </div>
+        <div class="card discover-card" data-go="search" data-tab="video">
+          <div class="ic" style="background:var(--dancer-soft); color:var(--dancer);">◐</div>
+          <h3>무드로 찾기</h3>
+          <p>장르 이름을 몰라도 원하는 감정과 분위기로 댄서와 클래스를 탐색할 수 있어요.</p>
+          <div class="ex"><span class="tag mood">몽환적인</span><span class="tag mood">파워풀한</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="split-dark">
+        <div>
+          <span class="eyebrow">04 · 댄서에게</span>
+          <h2>“내 춤을 좋아할 사람에게<br>정확하게 발견된다”</h2>
+          <p>팔로워 수가 아니라 장르·무드·수업 방식을 구조화한 Dance Profile로, 나와 결이 맞는 수강생에게 검색됩니다.</p>
+          <div style="margin-top:22px;"><button class="btn btn-ghost-light" data-go="dancer" data-id="d1">Dance Profile 예시 보기 →</button></div>
+        </div>
+        <div class="mini-profile" data-go="dancer" data-id="d1" style="cursor:pointer;">
+          <div class="top">
+            <div>
+              <div class="name">JIYOON</div>
+              <div style="font-size:13px; color:rgba(255,255,255,.6);">박지윤 · 서울 · 홍대</div>
+            </div>
+            <div class="rating">★ 4.8 (132)</div>
+          </div>
+          <div style="font-size:13.5px; color:rgba(255,255,255,.75); line-height:1.6;">힐댄스 · K-pop · 코레오그래피 · 표현·디테일 중심 지도</div>
+          <div class="row">
+            <span class="tag genre">힐댄스</span><span class="tag mood">섹시한</span><span class="tag mood">파워풀한</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="msg"><span>“춤을 시작하는 심리적 장벽을 낮추고,</span><span>댄서와 수강생의 가장 정확한 만남을 만드는 플랫폼.”</span></div>
+      <div class="note">이 화면은 기획서·SDD 기반 목데이터로 구성된 인터랙티브 프로토타입입니다.</div>
+    </section>
+  </div></main>
+  <div id="toast"></div>
+
+<script>
+/* =========================================================
+   DATA (SDD 4장 도메인 모델 기반 목데이터)
+========================================================= */
+const GENRES = ['K-pop','힙합','왁킹','락킹','팝핑','힐댄스','재즈','컨템포러리','코레오그래피'];
+const MOODS  = ['서정적인','아련한','몽환적인','격렬한','감정 폭발','파워풀한','섹시한','부드러운','자유로운','밝고 에너지 넘치는'];
+const LEVELS = [
+  {id:'COMPLETE_BEGINNER', label:'춤 완전 초보'},
+  {id:'GENRE_BEGINNER', label:'장르 초보 환영'},
+  {id:'BASIC', label:'기본 경험 보유'},
+  {id:'INTERMEDIATE', label:'중급'},
+  {id:'ADVANCED', label:'고급'}
+];
+
+const DANCERS = [
+  {id:'d1', name:'박지윤', stage:'JIYOON', region:'서울 · 홍대', lang:['한국어','영어'],
+   genres:['힐댄스','K-pop','코레오그래피'], moods:['섹시한','파워풀한','감정 폭발'],
+   lessonTypes:['정규 클래스','원데이 클래스','개인 레슨'], teaching:['표현 중심','디테일 중심'],
+   touch:'사전 동의 후 교정', rating:4.8, reviewCount:132,
+   bio:'힐댄스와 코레오그래피를 중심으로 활동합니다. 처음 힐을 신는 수강생도 편하게 따라올 수 있도록 기초 자세부터 차근차근 짚어드려요. 표현과 디테일을 함께 챙기는 수업을 지향합니다.'},
+  {id:'d2', name:'최다인', stage:'DAIN', region:'서울 · 성수', lang:['한국어'],
+   genres:['컨템포러리','코레오그래피'], moods:['몽환적인','서정적인','아련한'],
+   lessonTypes:['원데이 클래스','크루 안무'], teaching:['표현 중심','기본기 중심'],
+   touch:'말과 시범으로만 설명', rating:4.9, reviewCount:87,
+   bio:'몸의 여백과 호흡을 중요하게 생각하는 컨템포러리 안무가입니다. 신체 접촉 없이 말과 시범만으로 설명하며, 감정을 움직임으로 옮기는 과정을 함께 탐구합니다.'},
+  {id:'d3', name:'이서준', stage:'SEOJUN', region:'서울 · 강남', lang:['한국어','영어','일본어'],
+   genres:['락킹','팝핑','힙합'], moods:['파워풀한','밝고 에너지 넘치는'],
+   lessonTypes:['정규 클래스','개인 레슨'], teaching:['진도 중심','반복 설명 많음'],
+   touch:'신체 접촉 없음', rating:4.7, reviewCount:201,
+   bio:'완전 초보 전문 클래스를 오래 운영했습니다. 신체 접촉 없이 말과 반복 시범으로만 설명하고, 진도보다 이해를 우선합니다.'},
+  {id:'d4', name:'김하늘', stage:'HANEUL', region:'서울 · 홍대', lang:['한국어'],
+   genres:['K-pop'], moods:['밝고 에너지 넘치는','파워풀한'],
+   lessonTypes:['정규 클래스','원데이 클래스'], teaching:['기본기 중심','반복 설명 많음'],
+   touch:'사전 동의 후 교정', rating:4.9, reviewCount:314,
+   bio:'K-pop 원곡 안무 전문. 힙합이나 다른 장르 경험자가 K-pop을 처음 배울 때 헷갈리는 포인트를 짚어주는 수업으로 잘 알려져 있습니다.'},
+  {id:'d5', name:'정하윤', stage:'HAYOON', region:'서울 · 신촌', lang:['한국어'],
+   genres:['왁킹','재즈'], moods:['자유로운','밝고 에너지 넘치는','섹시한'],
+   lessonTypes:['정규 클래스','원데이 클래스'], teaching:['기본기 중심','표현 중심'],
+   touch:'사전 동의 후 교정', rating:4.85, reviewCount:76,
+   bio:'왁킹 장르 입문반을 전문으로 운영합니다. 힙합이나 다른 장르 경험이 있는 분들이 팔 동작 디테일을 빠르게 익힐 수 있도록 돕습니다.'}
+];
+
+const CLASSES = [
+  {id:'c1', dancerId:'d1', title:'힐댄스 입문 — 처음이어도 괜찮아요', genre:'힐댄스', level:'GENRE_BEGINNER',
+   purpose:'취미', pace:'천천히, 반복 설명 많음', price:35000, schedule:'화·목 20:00', region:'서울 · 홍대',
+   beginnerFriendly:4.6, psychEntry:1.8, soloFriendly:4.4, difficulty:2.4, touch:'사전 동의 후 교정', lang:['한국어'],
+   tags:['섹시한','파워풀한'], reviewCount:41,
+   reviews:[
+     {who:'완전 초보 · 20대', text:'처음이라 계속 못 따라갈까봐 걱정했는데, 선생님이 계속 괜찮다고 말씀해주셔서 안심하고 들었어요.'},
+     {who:'혼자 참여 · 30대', text:'혼자 갔는데 어색하지 않았어요. 진도가 느려서 부담 없이 따라갈 수 있었습니다.'},
+     {who:'힙합 경험 · 20대', text:'힙합만 추다가 처음 힐 신어봤는데 기초 자세부터 잘 잡아주십니다. 터치도 미리 물어봐 주셔서 편했어요.'}
+   ]},
+  {id:'c2', dancerId:'d1', title:'선미 〈열이올라요〉 힐댄스 원데이', genre:'힐댄스', level:'BASIC',
+   purpose:'촬영', pace:'보통', price:42000, schedule:'토 15:00 · 1회성', region:'서울 · 홍대',
+   beginnerFriendly:3.2, psychEntry:2.6, soloFriendly:4.1, difficulty:3.6, touch:'사전 동의 후 교정', lang:['한국어'],
+   tags:['섹시한','감정 폭발'], reviewCount:19,
+   reviews:[
+     {who:'기본 경험 · 20대', text:'원곡보다 훨씬 섹시하게 재해석된 안무예요. 촬영용으로 배우기 딱 좋았습니다.'},
+     {who:'재수강 · 30대', text:'디테일한 손동작 설명이 좋았어요. 다만 기본기가 없으면 살짝 빠를 수 있어요.'}
+   ]},
+  {id:'c3', dancerId:'d2', title:'컨템포러리 무드 클래스 — 몽환적인 움직임', genre:'컨템포러리', level:'GENRE_BEGINNER',
+   purpose:'표현', pace:'천천히', price:38000, schedule:'수 19:30', region:'서울 · 성수',
+   beginnerFriendly:4.2, psychEntry:2.0, soloFriendly:4.7, difficulty:2.8, touch:'신체 접촉 없음', lang:['한국어'],
+   tags:['몽환적인','서정적인'], reviewCount:26,
+   reviews:[
+     {who:'완전 초보 · 30대', text:'춤보다 명상에 가까운 느낌이었어요. 몸치인데도 눈치 안 보고 참여할 수 있었습니다.'},
+     {who:'혼자 참여 · 20대', text:'신체 접촉이 전혀 없어서 편했어요. 말로만 설명해주시는데도 이해가 잘 됐습니다.'}
+   ]},
+  {id:'c4', dancerId:'d3', title:'팝핑 완전 초보반 — 기초부터 차근차근', genre:'팝핑', level:'COMPLETE_BEGINNER',
+   purpose:'취미', pace:'매우 천천히, 반복 많음', price:33000, schedule:'월·수 20:30', region:'서울 · 강남',
+   beginnerFriendly:4.9, psychEntry:1.3, soloFriendly:4.8, difficulty:1.9, touch:'신체 접촉 없음', lang:['한국어','영어'],
+   tags:['밝고 에너지 넘치는'], reviewCount:58,
+   reviews:[
+     {who:'완전 초보 · 40대', text:'춤을 살면서 처음 배워봤는데 반 평균 연령대가 다양해서 안 어색했어요.'},
+     {who:'외국인 참여 · 20대', text:'영어로도 설명해주셔서 좋았습니다. 신체 접촉이 없어서 처음부터 편했어요.'}
+   ]},
+  {id:'c5', dancerId:'d4', title:'K-pop 입문반 — 힙합 경험자의 첫 K-pop', genre:'K-pop', level:'GENRE_BEGINNER',
+   purpose:'취미', pace:'보통', price:36000, schedule:'금 20:00', region:'서울 · 홍대',
+   beginnerFriendly:4.3, psychEntry:1.9, soloFriendly:4.0, difficulty:3.0, touch:'사전 동의 후 교정', lang:['한국어'],
+   tags:['밝고 에너지 넘치는','파워풀한'], reviewCount:33,
+   reviews:[
+     {who:'장르 초보 · 20대', text:'힙합만 추다가 K-pop 특유의 칼군무 포인트를 잘 짚어주셔서 감 잡는 데 도움이 됐어요.'}
+   ]},
+  {id:'c6', dancerId:'d5', title:'왁킹 장르 입문 — 힙합 경험자 환영', genre:'왁킹', level:'GENRE_BEGINNER',
+   purpose:'취미', pace:'보통, 팔 동작 디테일 반복', price:37000, schedule:'월 19:00', region:'서울 · 신촌',
+   beginnerFriendly:4.1, psychEntry:2.2, soloFriendly:4.3, difficulty:3.1, touch:'사전 동의 후 교정', lang:['한국어'],
+   tags:['자유로운','섹시한'], reviewCount:22,
+   reviews:[
+     {who:'힙합 경험 · 30대', text:'팔 동작이 낯설었는데 반복해서 짚어주셔서 감이 잡혔어요. 처음 왁킹 배우기 좋은 수업이에요.'}
+   ]}
+];
+
+const SONG = {title:'열이올라요', artist:'선미'};
+const VIDEOS = [
+  {id:'v1', dancerId:'d4', title:'열이올라요 — 원곡 안무', genre:'K-pop', mood:'밝고 에너지 넘치는'},
+  {id:'v2', dancerId:'d1', title:'열이올라요 — 힐댄스 리듬', genre:'힐댄스', mood:'섹시한'},
+  {id:'v3', dancerId:'d2', title:'열이올라요 — 코레오 재해석', genre:'코레오그래피', mood:'몽환적인'},
+  {id:'v4', dancerId:'d3', title:'열이올라요 — 퍼포먼스 버전', genre:'퍼포먼스', mood:'파워풀한'}
+];
+
+const QUICK_FILTERS = [
+  {label:'춤을 처음 배우는 사람이 많은 수업', apply:c=>c.level==='COMPLETE_BEGINNER'},
+  {label:'혼자 가도 부담 없는 클래스', apply:c=>c.soloFriendly>=4.3},
+  {label:'외국인이 참여하기 좋은 수업', apply:c=>c.lang.includes('영어')},
+  {label:'신체 접촉 없이 설명하는 강사', apply:c=>c.touch==='신체 접촉 없음'},
+  {label:'진도가 느리고 반복 설명이 많은 수업', apply:c=>c.pace.includes('천천히')},
+  {label:'감정 표현을 많이 배우는 클래스', apply:c=>c.tags.includes('감정 폭발')||c.tags.includes('서정적인')}
+];
+
+/* =========================================================
+   STATE
+========================================================= */
+const state = {
+  view:'home', role:'student', searchTab:'class',
+  selectedClass:'c1', selectedDancer:'d1',
+  filters:{genre:new Set(), mood:new Set(), level:new Set(), touch:new Set()},
+  quick:null, favs:new Set()
+};
+
+const $ = sel => document.querySelector(sel);
+const app = $('#app');
+
+function dancerOf(id){ return DANCERS.find(d=>d.id===id); }
+function classOf(id){ return CLASSES.find(c=>c.id===id); }
+function classesOfDancer(id){ return CLASSES.filter(c=>c.dancerId===id); }
+function initials(name){ return name.slice(0,1); }
+
+function go(view, id){
+  state.view = view;
+  if(view==='class' && id) state.selectedClass=id;
+  if(view==='dancer' && id) state.selectedDancer=id;
+  render();
+  window.scrollTo({top:0, behavior:'auto'});
+}
+
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+/* =========================================================
+   RENDER: shared chrome
+========================================================= */
+function renderChrome(){
+  document.querySelectorAll('#protoNav button[data-view]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.view===state.view);
+  });
+  document.querySelectorAll('nav.primary button[data-view]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.view===state.view || (state.view!=='home' && state.view!=='search' && b.dataset.view==='search' && false));
+  });
+  document.querySelectorAll('.role-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.role===state.role);
+  });
+}
+
+/* =========================================================
+   RENDER: HOME
+========================================================= */
+function bridgeSvg(){
+  return `
+  <svg viewBox="0 0 520 200" width="100%" height="auto" role="img" aria-label="수강생과 댄서를 잇는 다리 일러스트">
+    <defs>
+      <linearGradient id="pathGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#4F46E5"/>
+        <stop offset="1" stop-color="#E8412F"/>
+      </linearGradient>
+    </defs>
+    <path id="bridgePath" d="M96,142 C170,66 350,66 424,86" fill="none" stroke="url(#pathGrad)" stroke-width="2.5" stroke-dasharray="1 9" stroke-linecap="round"/>
+    <circle cx="96" cy="142" r="34" fill="#4F46E5"/>
+    <text x="96" y="149" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="26" fill="#fff">?</text>
+    <text x="96" y="196" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#6B5F68">망설이는 수강생</text>
+    <circle cx="424" cy="86" r="34" fill="#E8412F"/>
+    <path transform="translate(424,86)" d="M0,-13 L3.4,-4.4 12.4,-4 5.2,1.8 7.6,10.8 0,5.6 -7.6,10.8 -5.2,1.8 -12.4,-4 -3.4,-4.4 Z" fill="#fff"/>
+    <text x="424" y="140" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#6B5F68">발견되는 댄서</text>
+    <circle r="5" fill="#B4841C"><animateMotion dur="4.2s" repeatCount="indefinite" begin="0s"><mpath href="#bridgePath"/></animateMotion></circle>
+    <circle r="4" fill="#4F46E5"><animateMotion dur="4.2s" repeatCount="indefinite" begin="1.4s"><mpath href="#bridgePath"/></animateMotion></circle>
+    <circle r="4" fill="#E8412F"><animateMotion dur="4.2s" repeatCount="indefinite" begin="2.8s"><mpath href="#bridgePath"/></animateMotion></circle>
+  </svg>`;
+}
+
+function renderHome(){
+  const primaryFirst = state.role==='dancer';
+  return `
+  <div class="container">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">DANCEBRIDGE · 가칭</span>
+        <h1>“내가 가도 <em>괜찮은</em> 수업”을 찾는 곳,<br>그리고 내 춤이 <em>정확히</em> 발견되는 곳</h1>
+        <p>기존 댄스 플랫폼은 지역·가격·장르만 보여줍니다. DanceBridge는 수강생이 신청 직전 가장 크게 느끼는 심리적 불안에 답하고, 댄서에게는 SNS 알고리즘이 아닌 정확한 매칭으로 발견될 기회를 제공합니다.</p>
+        <div class="hero-ctas" style="${primaryFirst?'flex-direction:row-reverse; justify-content:flex-end;':''}">
+          <button class="btn btn-student" data-go="search" data-tab="class">수강생으로 시작 — 수업 둘러보기</button>
+          <button class="btn btn-ghost" data-go="dancer" data-id="d1">댄서로 시작 — 프로필 예시 보기</button>
+        </div>
+      </div>
+      <div>
+        <div class="bridge-wrap">
+          ${bridgeSvg()}
+          <div class="bridge-caption"><span>UNCERTAIN</span><span>DISCOVERED</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <span class="eyebrow">02 · 세 가지 불안</span>
+        <h2 class="section-title">수강생의 불안은 경험 수준마다 다릅니다</h2>
+        <p class="section-desc">‘초급’이라는 한 단어로는 설명되지 않는 세 가지 상태를 구분해서 보여줍니다.</p>
+      </div>
+      <div class="grid-3">
+        <div class="card persona-card">
+          <span class="num">01 · 완전 초보</span>
+          <h3>“나만 못 따라갈까봐”</h3>
+          <ul>
+            <li>혼자 수업에 가는 것에 대한 두려움</li>
+            <li>거울 앞에서 틀리는 모습에 대한 창피함</li>
+            <li>‘초급’ 표시가 실제로 초보에게 맞는지 알 수 없음</li>
+          </ul>
+        </div>
+        <div class="card persona-card">
+          <span class="num">02 · 경험자</span>
+          <h3>“내 수준에 맞는 수업일까”</h3>
+          <ul>
+            <li>진도와 피드백 수준을 판단하기 어려움</li>
+            <li>취미형인지 촬영·공연 목표형인지 불명확</li>
+            <li>기본기 중심인지 진도 중심인지 알기 어려움</li>
+          </ul>
+        </div>
+        <div class="card persona-card">
+          <span class="num">03 · 타 장르 입문</span>
+          <h3>“춤은 처음이 아닌데, 이 장르는 처음”</h3>
+          <ul>
+            <li>‘완전 초보반’과 ‘장르 입문반’이 구분되지 않음</li>
+            <li>기존 경험을 인정해주는 수업을 찾기 어려움</li>
+            <li>예: 힙합 경험자가 왁킹을 처음 배우는 경우</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <span class="eyebrow">03 · 발견 경로</span>
+        <h2 class="section-title">장르를 몰라도, 세 가지 방법으로 찾을 수 있어요</h2>
+      </div>
+      <div class="grid-3">
+        <div class="card discover-card" data-go="search" data-tab="song">
+          <div class="ic" style="background:var(--student-soft); color:var(--student);">♪</div>
+          <h3>노래로 찾기</h3>
+          <p>좋아하는 노래 하나로 원곡 안무, 힐댄스, 코레오, 퍼포먼스까지 서로 다른 해석을 비교해요.</p>
+          <div class="ex"><span class="tag">예: 선미 〈열이올라요〉</span></div>
+        </div>
+        <div class="card discover-card" data-go="search" data-tab="class">
+          <div class="ic" style="background:var(--gold-soft); color:var(--gold);">#</div>
+          <h3>장르로 찾기</h3>
+          <p>‘초급·중급·고급’ 대신 완전 초보 / 장르 입문 / 경험 보유 / 표현 중심 등으로 세분화합니다.</p>
+          <div class="ex"><span class="tag genre">힐댄스</span><span class="tag genre">왁킹</span></div>
+        </div>
+        <div class="card discover-card" data-go="search" data-tab="video">
+          <div class="ic" style="background:var(--dancer-soft); color:var(--dancer);">◐</div>
+          <h3>무드로 찾기</h3>
+          <p>장르 이름을 몰라도 원하는 감정과 분위기로 댄서와 클래스를 탐색할 수 있어요.</p>
+          <div class="ex"><span class="tag mood">몽환적인</span><span class="tag mood">파워풀한</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="split-dark">
+        <div>
+          <span class="eyebrow">04 · 댄서에게</span>
+          <h2>“내 춤을 좋아할 사람에게<br>정확하게 발견된다”</h2>
+          <p>팔로워 수가 아니라 장르·무드·수업 방식을 구조화한 Dance Profile로, 나와 결이 맞는 수강생에게 검색됩니다.</p>
+          <div style="margin-top:22px;"><button class="btn btn-ghost-light" data-go="dancer" data-id="d1">Dance Profile 예시 보기 →</button></div>
+        </div>
+        <div class="mini-profile" data-go="dancer" data-id="d1" style="cursor:pointer;">
+          <div class="top">
+            <div>
+              <div class="name">JIYOON</div>
+              <div style="font-size:13px; color:rgba(255,255,255,.6);">박지윤 · 서울 · 홍대</div>
+            </div>
+            <div class="rating">★ 4.8 (132)</div>
+          </div>
+          <div style="font-size:13.5px; color:rgba(255,255,255,.75); line-height:1.6;">힐댄스 · K-pop · 코레오그래피 · 표현·디테일 중심 지도</div>
+          <div class="row">
+            <span class="tag genre">힐댄스</span><span class="tag mood">섹시한</span><span class="tag mood">파워풀한</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="msg"><span>“춤을 시작하는 심리적 장벽을 낮추고,</span><span>댄서와 수강생의 가장 정확한 만남을 만드는 플랫폼.”</span></div>
+      <div class="note">이 화면은 기획서·SDD 기반 목데이터로 구성된 인터랙티브 프로토타입입니다.</div>
+    </section>
+  </div>`;
+}
+
+/* =========================================================
+   RENDER: SEARCH
+========================================================= */
+function filteredClasses(){
+  let list = CLASSES.slice();
+  if(state.quick!==null) list = list.filter(QUICK_FILTERS[state.quick].apply);
+  const f = state.filters;
+  if(f.genre.size) list = list.filter(c=>f.genre.has(c.genre));
+  if(f.mood.size) list = list.filter(c=>c.tags.some(t=>f.mood.has(t)));
+  if(f.level.size) list = list.filter(c=>f.level.has(c.level));
+  if(f.touch.size) list = list.filter(c=>f.touch.has(c.touch));
+  return list;
+}
+
+function levelLabel(id){ return (LEVELS.find(l=>l.id===id)||{}).label || id; }
+
+function renderClassCard(c){
+  const d = dancerOf(c.dancerId);
+  const fav = state.favs.has(c.id);
+  return `
+  <div class="card class-card" data-go="class" data-id="${c.id}">
+    <div class="thumb">CLASS VIDEO</div>
+    <div class="card-top">
+      <h3>${c.title}</h3>
+      <button class="heart ${fav?'on':''}" data-fav="${c.id}">${fav?'♥':'♡'}</button>
+    </div>
+    <div class="card-sub">${d.name} · ${c.region} · ${c.schedule}</div>
+    <div class="card-tags">
+      <span class="tag genre">${c.genre}</span>
+      <span class="tag">${levelLabel(c.level)}</span>
+      ${c.tags.map(t=>`<span class="tag mood">${t}</span>`).join('')}
+    </div>
+    <div class="card-foot">
+      <span class="price">₩${c.price.toLocaleString()}</span>
+      <span>초보 친화 ${c.beginnerFriendly.toFixed(1)} · 리뷰 ${c.reviewCount}</span>
+    </div>
+  </div>`;
+}
+
+function renderDancerCard(d){
+  return `
+  <div class="card dancer-card" data-go="dancer" data-id="${d.id}">
+    <div class="head">
+      <div class="avatar">${initials(d.name)}</div>
+      <div>
+        <h3>${d.stage} <span style="font-weight:400; font-size:13px; color:var(--ink-soft);">· ${d.name}</span></h3>
+        <div class="card-sub" style="margin-bottom:0;">${d.region}</div>
+      </div>
+    </div>
+    <div class="card-tags">
+      ${d.genres.map(g=>`<span class="tag genre">${g}</span>`).join('')}
+      ${d.moods.slice(0,2).map(m=>`<span class="tag mood">${m}</span>`).join('')}
+    </div>
+    <div class="card-foot">
+      <span class="rating-inline">★ ${d.rating} (${d.reviewCount})</span>
+      <span>${d.lessonTypes[0]} 외 ${d.lessonTypes.length-1}종</span>
+    </div>
+  </div>`;
+}
+
+function renderVideoCard(v){
+  const d = dancerOf(v.dancerId);
+  return `
+  <div class="card video-card" data-go="dancer" data-id="${v.dancerId}">
+    <div class="thumb">${v.title}</div>
+    <div class="card-sub" style="margin-bottom:8px;">${d.stage} · ${d.name}</div>
+    <div class="card-tags">
+      <span class="tag genre">${v.genre}</span>
+      <span class="tag mood">${v.mood}</span>
+    </div>
+  </div>`;
+}
+
+function chipsFor(list, set, group){
+  return list.map(v=>`<button class="chip ${set.has(v)?'active':''}" data-filter="${group}" data-val="${v}">${v}</button>`).join('');
+}
+
+function renderSearch(){
+  const tab = state.searchTab;
+  let resultsHtml='', count=0;
+  if(tab==='class'){
+    const list = filteredClasses();
+    count = list.length;
+    resultsHtml = `<div class="results-grid">${list.map(renderClassCard).join('') || '<p style="color:var(--ink-soft);">조건에 맞는 클래스가 없어요. 필터를 조정해보세요.</p>'}</div>`;
+  } else if(tab==='dancer'){
+    count = DANCERS.length;
+    resultsHtml = `<div class="results-grid">${DANCERS.map(renderDancerCard).join('')}</div>`;
+  } else if(tab==='video'){
+    count = VIDEOS.length;
+    resultsHtml = `<div class="results-grid">${VIDEOS.map(renderVideoCard).join('')}</div>`;
+  } else {
+    count = 1;
+    resultsHtml = `
+      <div class="card" style="cursor:pointer; max-width:420px;" data-go="song">
+        <div class="thumb" style="height:80px;">SONG</div>
+        <h3 style="margin:0 0 4px;">${SONG.title}</h3>
+        <div class="card-sub">${SONG.artist} · 관련 영상 ${VIDEOS.length}개</div>
+      </div>`;
+  }
+
+  const filtersBlock = tab==='class' ? `
+    <div class="filters-card">
+      <div class="filter-group">
+        <span class="flabel">장르</span>
+        <div class="filter-row">${chipsFor(GENRES, state.filters.genre, 'genre')}</div>
+      </div>
+      <div class="filter-group">
+        <span class="flabel">무드</span>
+        <div class="filter-row">${chipsFor(MOODS, state.filters.mood, 'mood')}</div>
+      </div>
+      <div class="filter-group">
+        <span class="flabel">경험 수준</span>
+        <div class="filter-row">${LEVELS.map(l=>`<button class="chip ${state.filters.level.has(l.id)?'active':''}" data-filter="level" data-val="${l.id}">${l.label}</button>`).join('')}</div>
+      </div>
+      <div class="filter-group">
+        <span class="flabel">강사 터치 정책</span>
+        <div class="filter-row">${chipsFor(['신체 접촉 없음','사전 동의 후 교정'], state.filters.touch, 'touch')}</div>
+      </div>
+    </div>
+    <div class="quick-row">
+      ${QUICK_FILTERS.map((q,i)=>`<button class="chip tone-student ${state.quick===i?'active':''}" data-quick="${i}">${q.label}</button>`).join('')}
+    </div>` : '';
+
+  return `
+  <div class="container">
+    <div class="search-head">
+      <span class="eyebrow">SEARCH</span>
+      <h2 class="section-title" style="margin-bottom:2px;">클래스 · 댄서 · 영상 · 노래로 찾기</h2>
+      <div class="searchbar">
+        <input type="text" placeholder="예: 열이올라요, 힐댄스, 몽환적인…" />
+        <button class="btn btn-student btn-sm">검색</button>
+      </div>
+      <div class="tabs">
+        <button class="${tab==='class'?'active':''}" data-tab="class">클래스</button>
+        <button class="${tab==='dancer'?'active':''}" data-tab="dancer">댄서</button>
+        <button class="${tab==='video'?'active':''}" data-tab="video">영상</button>
+        <button class="${tab==='song'?'active':''}" data-tab="song">노래</button>
+      </div>
+    </div>
+    ${filtersBlock}
+    <div class="result-meta">
+      <span>${count}개 결과</span>
+      ${tab==='class' && (state.filters.genre.size||state.filters.mood.size||state.filters.level.size||state.filters.touch.size||state.quick!==null) ? `<button class="clear-link" data-clear="1">필터 초기화</button>` : ''}
+    </div>
+    ${resultsHtml}
+  </div>`;
+}
+
+/* =========================================================
+   RENDER: CLASS DETAIL
+========================================================= */
+function scoreRow(label, val, max=5, lowIsGood=false){
+  const pct = Math.max(4, (val/max)*100);
+  return `
+  <div class="score-row">
+    <div class="label">${label}</div>
+    <div class="score-track"><div class="score-fill ${lowIsGood?'low-good':''}" style="width:${pct}%;"></div></div>
+    <div class="score-val">${val.toFixed(1)}</div>
+  </div>`;
+}
+
+function renderClassDetail(){
+  const c = classOf(state.selectedClass);
+  const d = dancerOf(c.dancerId);
+  return `
+  <div class="container">
+    <div class="breadcrumb"><button data-go="search" data-tab="class">검색</button><span>›</span><span>${c.title}</span></div>
+    <div class="detail-head">
+      <div class="badges-row">
+        <span class="tag genre">${c.genre}</span>
+        <span class="tag">${levelLabel(c.level)}</span>
+        ${c.tags.map(t=>`<span class="tag mood">${t}</span>`).join('')}
+      </div>
+      <h1 class="detail-title">${c.title}</h1>
+      <div class="meta-strip">
+        <div><span class="k">일정</span><span class="v">${c.schedule}</span></div>
+        <div><span class="k">지역</span><span class="v">${c.region}</span></div>
+        <div><span class="k">진행 언어</span><span class="v">${c.lang.join(', ')}</span></div>
+        <div><span class="k">터치 정책</span><span class="v">${c.touch}</span></div>
+        <div><span class="k">수업 목적</span><span class="v">${c.purpose}</span></div>
+        <div><span class="k">진도 속도</span><span class="v">${c.pace}</span></div>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <div class="score-block">
+          <h3 style="margin:0 0 16px; font-size:18px;">리뷰 기반 심리적 진입 지표 <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-soft); font-weight:400;">(리뷰 ${c.reviewCount}건 집계)</span></h3>
+          ${scoreRow('실제 난이도', c.difficulty)}
+          ${scoreRow('심리적 진입 난이도', c.psychEntry, 5, true)}
+          ${scoreRow('초보 친화도', c.beginnerFriendly)}
+          ${scoreRow('혼자 참여 친화도', c.soloFriendly)}
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 4px; font-size:18px;">수강생 리뷰</h3>
+          <div>
+            ${c.reviews.map(r=>`
+              <div class="review">
+                <div class="who">${r.who}</div>
+                <p>${r.text}</p>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="dancer-mini" data-go="dancer" data-id="${d.id}">
+          <div class="avatar">${initials(d.name)}</div>
+          <div>
+            <div style="font-weight:700; font-size:15px;">${d.stage} <span style="font-weight:400; color:var(--ink-soft); font-size:13px;">· ${d.name}</span></div>
+            <div class="rating-inline">★ ${d.rating} · 리뷰 ${d.reviewCount}건</div>
+          </div>
+        </div>
+
+        <div class="info-panel">
+          <div class="price-big">₩${c.price.toLocaleString()}</div>
+          <div class="price-note">1회 수강 기준</div>
+          <ul class="info-list">
+            <li><span>대상 수준</span><span>${levelLabel(c.level)}</span></li>
+            <li><span>진행 언어</span><span>${c.lang.join(', ')}</span></li>
+            <li><span>터치 정책</span><span>${c.touch}</span></li>
+            <li><span>수업 목적</span><span>${c.purpose}</span></li>
+          </ul>
+          <button class="btn btn-student" style="width:100%; justify-content:center;" data-apply="1">신청하기</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   RENDER: DANCER PROFILE
+========================================================= */
+function renderDancerProfile(){
+  const d = dancerOf(state.selectedDancer);
+  const classes = classesOfDancer(d.id);
+  return `
+  <div class="container">
+    <div class="breadcrumb"><button data-go="search" data-tab="dancer">검색</button><span>›</span><span>${d.stage}</span></div>
+    <div class="detail-head">
+      <div class="dancer-header">
+        <div class="avatar-lg">${initials(d.name)}</div>
+        <div>
+          <h1 class="dancer-name">${d.stage}</h1>
+          <div class="dancer-stage">${d.name} · ${d.region} · ★ ${d.rating} (${d.reviewCount}건)</div>
+        </div>
+      </div>
+      <p style="max-width:620px; color:var(--ink-soft); line-height:1.75; margin-top:20px;">${d.bio}</p>
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <div class="attr-block">
+          <span class="flabel">전문 장르</span>
+          <div class="filter-row">${d.genres.map(g=>`<span class="tag genre">${g}</span>`).join('')}</div>
+        </div>
+        <div class="attr-block">
+          <span class="flabel">주력 무드</span>
+          <div class="filter-row">${d.moods.map(m=>`<span class="tag mood">${m}</span>`).join('')}</div>
+        </div>
+        <div class="attr-block">
+          <span class="flabel">가능한 수업 형태</span>
+          <div class="filter-row">${d.lessonTypes.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
+        </div>
+        <div class="attr-block">
+          <span class="flabel">지도 방식</span>
+          <div class="filter-row">${d.teaching.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
+        </div>
+
+        <div class="attr-block">
+          <span class="flabel">진행 중인 클래스 (${classes.length})</span>
+          <div class="results-grid" style="margin-top:10px;">
+            ${classes.map(renderClassCard).join('')}
+          </div>
+        </div>
+
+        <div class="attr-block">
+          <span class="flabel">대표 영상</span>
+          <div class="results-grid">
+            ${VIDEOS.filter(v=>v.dancerId===d.id).map(v=>`
+              <div class="card video-card">
+                <div class="thumb">${v.title}</div>
+                <div class="card-tags"><span class="tag genre">${v.genre}</span><span class="tag mood">${v.mood}</span></div>
+              </div>`).join('') || `<p style="color:var(--ink-soft); font-size:13.5px;">등록된 영상 예시가 없습니다.</p>`}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="info-panel" style="position:static;">
+          <ul class="info-list" style="margin-bottom:0;">
+            <li><span>활동 지역</span><span>${d.region}</span></li>
+            <li><span>사용 언어</span><span>${d.lang.join(', ')}</span></li>
+            <li><span>터치 정책</span><span>${d.touch}</span></li>
+            <li><span>평균 평점</span><span>★ ${d.rating}</span></li>
+            <li><span>누적 리뷰</span><span>${d.reviewCount}건</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   RENDER: SONG DETAIL
+========================================================= */
+function renderSongDetail(){
+  return `
+  <div class="container">
+    <div class="breadcrumb"><button data-go="search" data-tab="song">검색</button><span>›</span><span>${SONG.title}</span></div>
+    <div class="song-hero">
+      <span class="k">SONG SEARCH RESULT</span>
+      <h1>${SONG.title}</h1>
+      <div class="artist">${SONG.artist}</div>
+      <p style="color:var(--ink-soft); max-width:560px; line-height:1.7; margin-top:14px;">
+        장르 이름을 몰라도 좋아하는 노래로 시작할 수 있어요. 같은 곡을 서로 다르게 해석한 댄서들의 영상을 비교해보세요.
+      </p>
+    </div>
+    <h3 style="margin:0 0 16px; font-size:17px;">관련 영상 (${VIDEOS.length})</h3>
+    <div class="video-grid">
+      ${VIDEOS.map(v=>{
+        const d = dancerOf(v.dancerId);
+        const cls = classesOfDancer(d.id)[0];
+        return `
+        <div class="card">
+          <div class="thumb" style="height:150px; font-size:12px;">${v.title}</div>
+          <div class="card-top" style="margin-bottom:8px;">
+            <div>
+              <h3 style="margin:0;">${d.stage}</h3>
+              <div class="card-sub" style="margin-bottom:0;">${d.name} · ${d.region}</div>
+            </div>
+            <span class="rating-inline">★ ${d.rating}</span>
+          </div>
+          <div class="card-tags">
+            <span class="tag genre">${v.genre}</span>
+            <span class="tag mood">${v.mood}</span>
+          </div>
+          <div class="card-foot" style="border-top:none; padding-top:0;">
+            <button class="btn btn-ghost btn-sm" data-go="dancer" data-id="${d.id}">프로필 보기</button>
+            ${cls?`<button class="btn btn-student btn-sm" data-go="class" data-id="${cls.id}">신청 가능한 클래스</button>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   MAIN RENDER
+========================================================= */
+function render(){
+  renderChrome();
+  if(state.view==='home') app.innerHTML = renderHome();
+  else if(state.view==='search') app.innerHTML = renderSearch();
+  else if(state.view==='class') app.innerHTML = renderClassDetail();
+  else if(state.view==='dancer') app.innerHTML = renderDancerProfile();
+  else if(state.view==='song') app.innerHTML = renderSongDetail();
+}
+
+/* =========================================================
+   EVENTS (delegation)
+========================================================= */
+document.addEventListener('click', (e)=>{
+  const navBtn = e.target.closest('#protoNav button[data-view], nav.primary button[data-view]');
+  if(navBtn){ go(navBtn.dataset.view, navBtn.dataset.id); return; }
+
+  const roleBtn = e.target.closest('.role-btn');
+  if(roleBtn){ state.role = roleBtn.dataset.role; render(); return; }
+
+  const goEl = e.target.closest('[data-go]');
+  if(goEl){
+    const view = goEl.dataset.go;
+    if(goEl.dataset.tab){ state.searchTab = goEl.dataset.tab; }
+    go(view, goEl.dataset.id);
+    return;
+  }
+
+  const tabBtn = e.target.closest('.tabs button[data-tab]');
+  if(tabBtn){ state.searchTab = tabBtn.dataset.tab; render(); return; }
+
+  const filterBtn = e.target.closest('[data-filter]');
+  if(filterBtn){
+    const g = filterBtn.dataset.filter, v = filterBtn.dataset.val;
+    const set = state.filters[g];
+    set.has(v) ? set.delete(v) : set.add(v);
+    render();
+    return;
+  }
+
+  const quickBtn = e.target.closest('[data-quick]');
+  if(quickBtn){
+    const i = Number(quickBtn.dataset.quick);
+    state.quick = state.quick===i ? null : i;
+    render();
+    return;
+  }
+
+  const clearBtn = e.target.closest('[data-clear]');
+  if(clearBtn){
+    state.filters = {genre:new Set(), mood:new Set(), level:new Set(), touch:new Set()};
+    state.quick = null;
+    render();
+    return;
+  }
+
+  const favBtn = e.target.closest('[data-fav]');
+  if(favBtn){
+    e.stopPropagation();
+    const id = favBtn.dataset.fav;
+    state.favs.has(id) ? state.favs.delete(id) : state.favs.add(id);
+    render();
+    return;
+  }
+
+  const applyBtn = e.target.closest('[data-apply]');
+  if(applyBtn){
+    toast('MVP 프로토타입에서는 실제 예약이 연결되어 있지 않아요');
+    return;
+  }
+});
+
+/* reduced motion: soften SMIL bridge animation */
+if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.querySelectorAll('animateMotion').forEach(el=>el.setAttribute('repeatCount','1'));
+  });
+}
+
+render();
+</script>
+
+
+</body></html>
